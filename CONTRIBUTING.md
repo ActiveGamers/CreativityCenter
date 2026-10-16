@@ -77,7 +77,7 @@ Feature requests that lack a clear use case may be closed.
 
 - PHP **8.3+**
 - Composer **2.x**
-- Node.js **20+** and npm
+- Node.js **20.19+** or **22.12+** and npm
 - MySQL **8.x** or PostgreSQL **15+**
 - Redis **7+** (required for Horizon, queues, and cache)
 - Docker & Docker Compose (optional but recommended)

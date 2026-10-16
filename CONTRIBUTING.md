@@ -1,0 +1,349 @@
+Contributing to CreativityCenter
+
+First off, thank you for considering contributing to CreativityCenter! It's people like you that make this project better for everyone.
+
+Please take a moment to review this document before opening an issue or submitting a pull request.
+
+---
+
+## Table of Contents
+
+- [Code of Conduct](#code-of-conduct)
+- [I Have a Question](#i-have-a-question)
+- [Reporting Bugs](#reporting-bugs)
+- [Suggesting Features](#suggesting-features)
+- [Development Setup](#development-setup)
+- [Branching Model](#branching-model)
+- [Commit Conventions](#commit-conventions)
+- [Pull Request Process](#pull-request-process)
+- [Coding Standards](#coding-standards)
+- [Testing](#testing)
+- [CI/CD](#cicd)
+- [Security Vulnerabilities](#security-vulnerabilities)
+
+---
+
+## Code of Conduct
+
+This project and everyone participating in it is governed by our [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to **ActiveGamers.info@gmail.com**.
+
+---
+
+## I Have a Question
+
+Before asking a question, please:
+
+1. Search existing [Issues](../../issues) and [Discussions](../../discussions).
+2. Read the [README](README.md) and this document carefully.
+3. Check the official docs for [Laravel](https://laravel.com/docs), [Horizon](https://laravel.com/docs/horizon), and [Spatie Media Library](https://spatie.be/docs/laravel-medialibrary).
+
+If you still need help, open a new Discussion (not an Issue) with a clear title and as much context as possible.
+
+---
+
+## Reporting Bugs
+
+A good bug report is one that is **reproducible**. Before submitting, please:
+
+- Confirm the bug is not already reported.
+- Test against the latest `dev` branch.
+- Collect the following:
+  - **PHP** and **Laravel** versions (`php -v`, `php artisan --version`).
+  - Operating system and browser (if frontend-related).
+  - Steps to reproduce.
+  - Expected vs. actual behavior.
+  - Logs from `storage/logs/laravel.log` or the output of `php artisan pail`.
+
+Use the issue template and fill in every section. Screenshots or short screen recordings are highly appreciated.
+
+---
+
+## Suggesting Features
+
+We love feature suggestions. To make the discussion productive:
+
+1. Explain **the problem** you are trying to solve, not just the solution.
+2. Describe alternatives you have considered.
+3. If possible, sketch the API or user flow you have in mind.
+4. Keep the scope as small as possible — one feature per discussion.
+
+Feature requests that lack a clear use case may be closed.
+
+---
+
+## Development Setup
+
+### Requirements
+
+- PHP **8.3+**
+- Composer **2.x**
+- Node.js **20+** and npm
+- MySQL **8.x** or PostgreSQL **15+**
+- Redis **7+** (required for Horizon, queues, and cache)
+- Docker & Docker Compose (optional but recommended)
+
+### Local Installation
+
+Fork the repository, clone your fork, add the upstream remote, then:
+
+**Step 1 — Install dependencies**
+
+    composer install
+    npm install
+
+**Step 2 — Prepare the environment**
+
+    cp .env.example .env
+    php artisan key:generate
+
+**Step 3 — Configure `.env`**
+
+Set your database and Redis credentials.
+
+**Step 4 — Migrate and seed**
+
+    php artisan migrate --seed
+
+**Step 5 — Link storage (required for Spatie Media Library)**
+
+    php artisan storage:link
+
+**Step 6 — Build frontend assets**
+
+    npm run dev
+
+**Step 7 — Run the services (in separate terminals)**
+
+    php artisan serve
+    php artisan horizon
+
+We recommend running Horizon locally so you can inspect queued jobs during development.
+
+---
+
+## Branching Model
+
+This project uses a **two-branch** model:
+
+| Branch   | Purpose                                              | Rules                                              |
+|----------|------------------------------------------------------|----------------------------------------------------|
+| `master` | Production-ready code only. Deployed to production.  | **Protected.** No direct pushes, no PRs allowed.   |
+| `dev`    | Active development and integration branch.           | **Protected.** PRs only, no direct pushes.         |
+
+### Important: PRs are only accepted against `dev`
+
+**Every Pull Request must target the `dev` branch.** Any PR opened against `master` will be **closed automatically without review**. This is enforced by the repository's branch protection rules.
+
+The promotion of changes from `dev` to `master` is handled exclusively by the maintainers through the automated release pipeline.
+
+### Workflow
+
+1. Create your feature branch **from `dev`**:
+
+       git checkout dev
+       git pull upstream dev
+       git checkout -b feat/short-description
+
+2. Do your work, commit using [Conventional Commits](#commit-conventions).
+
+3. Push to your fork and open a Pull Request **against `dev`**.
+
+4. After review and merge into `dev`, the release process will promote changes to `master` automatically.
+
+### Branch Naming
+
+Use a short, descriptive prefix:
+
+- `feat/...` – new feature
+- `fix/...` – bug fix
+- `refactor/...` – code refactor without behavior change
+- `docs/...` – documentation only
+- `chore/...` – tooling, dependencies, CI
+- `test/...` – adding or fixing tests
+- `perf/...` – performance improvement
+
+Example: `feat/media-library-thumbnails`
+
+---
+
+## Commit Conventions
+
+This project uses **[Conventional Commits](https://www.conventionalcommits.org/)** because automated releases and changelog generation rely on them (via `semantic-release`).
+
+### Format
+
+    <type>(<scope>): <short description>
+
+    [optional body]
+
+    [optional footer(s)]
+
+### Allowed types
+
+| Type       | Meaning                                            | Triggers release |
+|------------|----------------------------------------------------|------------------|
+| `feat`     | New feature                                        | Minor            |
+| `fix`      | Bug fix                                            | Patch            |
+| `perf`     | Performance improvement                            | Patch            |
+| `refactor` | Code change without feature or fix                 | No               |
+| `docs`     | Documentation only                                 | No               |
+| `style`    | Formatting, missing semicolons, etc.               | No               |
+| `test`     | Adding or updating tests                           | No               |
+| `chore`    | Build process, deps, tooling                       | No               |
+| `ci`       | CI/CD configuration changes                        | No               |
+| `build`    | Changes to build system or dependencies            | No               |
+| `revert`   | Revert a previous commit                           | Patch            |
+
+### Breaking changes
+
+Any commit that breaks backward compatibility **must** include `BREAKING CHANGE:` in the footer (or `!` after the type). This triggers a **major** version bump.
+
+Example:
+
+    feat(api)!: change response schema for /users
+
+    BREAKING CHANGE: `name` is now split into `first_name` and `last_name`.
+
+### Examples
+
+    feat(media): add thumbnail generation for uploaded images
+    fix(horizon): prevent duplicate job dispatch on retry
+    docs(readme): update local setup instructions
+    chore(deps): bump laravel/framework to 11.30
+
+Commits that don't follow this format may be rejected during review.
+
+---
+
+## Pull Request Process
+
+1. **Sync with `dev`** before opening the PR:
+
+       git fetch upstream
+       git rebase upstream/dev
+
+2. **Target the `dev` branch.** PRs against `master` are closed automatically.
+
+3. **Fill in the PR template** completely:
+   - What the change does and why.
+   - Link to the related issue (`Closes #123`).
+   - Screenshots for UI changes.
+   - Any migration or `.env` changes.
+
+4. **Keep PRs small.** A PR that changes 30 files is very hard to review. Prefer several focused PRs over one giant one.
+
+5. **One concern per PR.** Don't mix a refactor with a feature.
+
+6. **Ensure CI passes.** All checks (Pint, PHPStan, tests, CodeQL, Docker build) must be green.
+
+7. **Respond to review comments.** If you disagree, explain why politely. The goal is a better project, not winning an argument.
+
+8. **Rebase, don't merge `dev` into your branch.** Keep a clean, linear history.
+
+### Merge Strategy
+
+Only **Merge** and **Rebase** are allowed. **Squash merges are disabled.** This preserves the individual commits that `semantic-release` uses to compute versions and changelogs.
+
+---
+
+## Coding Standards
+
+### PHP
+
+- Follow **PSR-12** and the **Laravel** conventions.
+- Code style is enforced by **Laravel Pint**:
+
+      ./vendor/bin/pint
+
+- Static analysis is enforced by **PHPStan / Larastan** at level 5+:
+
+      ./vendor/bin/phpstan analyse
+
+- Use **type hints** everywhere (parameters, return types, properties).
+- Prefer **readonly properties** and **enums** where applicable.
+- Avoid facades inside domain/service classes when constructor injection is possible.
+- All new classes must be **final** unless designed for extension.
+
+### Blade & Frontend
+
+- Use Tailwind utility classes; avoid custom CSS unless necessary.
+- Extract repeated markup into Blade components.
+- All user-facing strings must be wrapped in `__('...')` for i18n.
+
+### Database
+
+- Every migration must be reversible (`down()` implemented).
+- Never modify an existing migration that has been merged to `dev`. Create a new one instead.
+- Always use **foreign key constraints** and **indexes** where appropriate.
+- Avoid raw SQL unless justified in a comment.
+
+### Horizon / Queues
+
+- All jobs must be **idempotent**.
+- Always set `$tries`, `$timeout`, and `$backoff` explicitly.
+- Never dispatch a job from a job unless justified.
+- Long-running tasks must implement `ShouldBeUnique` or a lock.
+
+### Media Library
+
+- Use dedicated **collections** with clear names (e.g., `avatars`, `covers`).
+- Define conversions in the model, not on the fly.
+- Always register `MediaConversion` for thumbnails.
+
+---
+
+## Testing
+
+Every PR that adds or changes behavior **must** include tests.
+
+- Unit tests: `tests/Unit`
+- Feature tests: `tests/Feature`
+
+Run the suite:
+
+    php artisan test
+    # or with coverage
+    php artisan test --coverage --min=80
+
+Guidelines:
+
+- Use **factories** and **seeders**, never raw inserts in tests.
+- Prefer `RefreshDatabase` over `DatabaseTransactions`.
+- Tests must not depend on execution order.
+- Test names must describe the expected behavior, not the method name.
+
+---
+
+## CI/CD
+
+Every push and PR runs:
+
+1. **Pint** – code style.
+2. **PHPStan** – static analysis.
+3. **PHPUnit / Pest** – tests, with a minimum coverage threshold.
+4. **CodeQL** – security scanning.
+5. **Docker build** – ensures the image builds successfully.
+
+After a merge to `master`, a `semantic-release` job:
+
+- Analyzes Conventional Commits.
+- Bumps the version in `composer.json` / `package.json`.
+- Generates `CHANGELOG.md`.
+- Creates a Git tag (`vX.Y.Z`).
+- Builds and pushes a Docker image tagged with the version and `latest`.
+
+Do **not** tag releases manually. Let the pipeline do it.
+
+---
+
+## Security Vulnerabilities
+
+If you discover a security vulnerability, **do not open a public issue**. Instead, email **ActiveGamers.info@gmail.com**. We will acknowledge your report within **48 hours** and work with you on a coordinated disclosure.
+
+---
+
+## Thank You
+
+Your time and effort are what make open source possible. Whether you report a typo, fix a bug, or submit a large feature — thank you. 🙏
+
+If anything in this document is unclear, please open a Discussion and tell us. This file is a living document and improves with your feedback..

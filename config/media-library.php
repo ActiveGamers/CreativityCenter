@@ -50,7 +50,7 @@ return [
      * The maximum file size of an item in bytes.
      * Adding a larger file will result in an exception.
      */
-    'max_file_size' => 1024 * 1024 * 100, // 10M0B
+    'max_file_size' => 1024 * 1024 * 100, // 100B
 
     /*
      * Uploads whose file name contains any of these extensions will be rejected.
@@ -78,7 +78,7 @@ return [
      * This queue connection will be used to generate derived and responsive images.
      * Leave empty to use the default queue connection.
      */
-    'queue_connection_name' => env('QUEUE_CONNECTION', 'redis'),
+    'queue_connection_name' => env('QUEUE_CONNECTION', 'database'),
 
     /*
      * This queue will be used to generate derived and responsive images.

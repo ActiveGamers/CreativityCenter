@@ -103,8 +103,13 @@ export function show(message, options = {}) {
     host.appendChild(toast);
 
     /* The countdown pauses while the toast is hovered or focused: a visitor
-       who is reading the message never loses it halfway. */
+       who is reading the message never loses it halfway. Hover and focus
+       are tracked separately, because the pointer and the keyboard can be
+       on the toast at the same time — the countdown only resumes when
+       neither of them is inside it any more. */
     let timer = null;
+    let pointerInside = false;
+    let focusInside = false;
 
     const stopTimer = () => {
         if (timer === null) {
@@ -131,15 +136,44 @@ export function show(message, options = {}) {
         }, timeout);
     };
 
+    /* The countdown runs only when the pointer is outside the toast *and*
+       the keyboard focus is outside it as well. */
+    const syncTimer = () => {
+        if (pointerInside || focusInside) {
+            stopTimer();
+
+            return;
+        }
+
+        startTimer();
+    };
+
     toast.querySelector('[data-toast-dismiss]')?.addEventListener('click', dismiss);
 
-    toast.addEventListener('mouseenter', stopTimer);
-    toast.addEventListener('mouseleave', startTimer);
-    toast.addEventListener('focusin', stopTimer);
+    toast.addEventListener('mouseenter', () => {
+        pointerInside = true;
+        stopTimer();
+    });
+
+    toast.addEventListener('mouseleave', () => {
+        pointerInside = false;
+        syncTimer();
+    });
+
+    toast.addEventListener('focusin', () => {
+        focusInside = true;
+        stopTimer();
+    });
+
     toast.addEventListener('focusout', (event) => {
-        if (!toast.contains(event.relatedTarget)) {
-            startTimer();
+        if (toast.contains(event.relatedTarget)) {
+            /* The focus moved to another element of the toast: it stays
+               inside, so the countdown stays paused. */
+            return;
         }
+
+        focusInside = false;
+        syncTimer();
     });
 
     startTimer();

@@ -478,8 +478,9 @@
     }
 
     /* Scroll-reveal. The hidden state only exists once the reveal module has
-       initialised (it adds the `reveal-ready` class to the <html> element),
-       so a blocked or failed bundle leaves the content visible. */
+       initialised successfully (it adds the `reveal-ready` class to the
+       <html> element), so a blocked or failed bundle leaves the content
+       visible. */
     .reveal-ready [data-reveal] {
         opacity: 0;
         transition:
@@ -497,11 +498,18 @@
         transform: translateX(24px);
     }
 
-    [dir='rtl'] .reveal-ready [data-reveal='start'] {
+    /* The reveal container is the <html> element and carries the `dir`
+       attribute itself, so the RTL direction has to match the container
+       directly (and its RTL parent, for a container nested in an RTL
+       element). The `:where()` keeps the specificity low, so the
+       `.is-revealed` and the reduced-motion resets still win. */
+    .reveal-ready:where([dir='rtl']) [data-reveal='start'],
+    :where([dir='rtl']) .reveal-ready [data-reveal='start'] {
         transform: translateX(24px);
     }
 
-    [dir='rtl'] .reveal-ready [data-reveal='end'] {
+    .reveal-ready:where([dir='rtl']) [data-reveal='end'],
+    :where([dir='rtl']) .reveal-ready [data-reveal='end'] {
         transform: translateX(-24px);
     }
 
@@ -517,9 +525,19 @@
         }
     }
 
-    /* Without JavaScript the drawer cannot be opened, so its trigger is
-       hidden and the <noscript> navigation of the header takes over. */
-    html:not(.js) [data-drawer-open] {
+    /* Without a running app the drawer cannot be opened, so its trigger is
+       hidden. The `app-ready` class is added by the bundle once it has
+       initialised: a blocked or failed bundle keeps the trigger hidden
+       instead of showing a button that would do nothing. */
+    html:not(.app-ready) [data-drawer-open] {
+        display: none;
+    }
+
+    /* The fallback navigation is always part of the markup: it takes over
+       when the JavaScript never runs. As soon as the app is ready the
+       drawer takes over and the fallback steps out of the way, so the two
+       are never visible at the same time. */
+    html.app-ready [data-fallback-nav] {
         display: none;
     }
 

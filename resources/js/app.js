@@ -49,14 +49,37 @@ function initForms() {
     });
 }
 
+/**
+ * Run one initialiser.
+ *
+ * A broken feature must never take the whole page down: the initialiser
+ * fails, the feature stays disabled and the rest of the page keeps
+ * working.
+ *
+ * @param {() => void} initialiser
+ */
+function safely(initialiser) {
+    try {
+        initialiser();
+    } catch (error) {
+        /* The failure is a developer matter; the page stays usable. */
+        console.error(error);
+    }
+}
+
 function boot() {
-    initTheme();
-    initNavigation();
-    initForms();
-    initReveal();
-    initCounters();
-    initGallery();
-    initNews();
+    safely(initTheme);
+    safely(initNavigation);
+    safely(initForms);
+    safely(initReveal);
+    safely(initCounters);
+    safely(initGallery);
+    safely(initNews);
+
+    /* The app is ready: the CSS keeps the drawer trigger hidden until this
+       marker is on the <html> element, so a bundle that never runs never
+       shows a button that would do nothing. */
+    document.documentElement.classList.add('app-ready');
 }
 
 if (document.readyState === 'loading') {

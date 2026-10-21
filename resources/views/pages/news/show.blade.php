@@ -10,6 +10,11 @@
         ->values();
 
     $publishedAt = $post->published_at;
+
+    /* The publication date is shown in the Persian calendar. */
+    $publishedLabel = $publishedAt
+        ? \Morilog\Jalali\Jalalian::fromCarbon($publishedAt)->format('Y/m/d')
+        : null;
 @endphp
 
 <x-layouts.app
@@ -35,10 +40,10 @@
                     <div class="flex flex-wrap items-center gap-3">
                         <x-badge :tone="$tone">{{ $categoryLabel }}</x-badge>
 
-                        @if ($publishedAt)
+                        @if ($publishedLabel)
                             <span class="inline-flex items-center gap-1.5 text-xs tabular-nums text-ink-300">
                                 <x-icon name="calendar" class="size-3.5 shrink-0 opacity-70" />
-                                <bdi dir="ltr">{{ $publishedAt->format('Y/m/d') }}</bdi>
+                                <bdi dir="ltr">{{ $publishedLabel }}</bdi>
                             </span>
                         @endif
                     </div>

@@ -118,19 +118,22 @@
     </div>
 </header>
 
-{{-- The fallback for visitors without JavaScript: the off-canvas drawer
-     cannot be opened, so the main links are repeated as a plain navigation.
-     The drawer trigger is hidden by the same rule in app.css. --}}
-<noscript>
-    <nav aria-label="فهرست اصلی" class="border-b border-ink-900/10 bg-ink-50 dark:border-white/10 dark:bg-ink-950">
-        <div class="container-page flex flex-wrap items-center gap-x-6 gap-y-2 py-3 text-sm font-medium text-ink-700 dark:text-ink-100">
-            @foreach ($navItems as $item)
-                <a href="{{ $item['href'] }}" @if ($item['active']) aria-current="page" @endif
-                   class="transition-colors hover:text-brand-600 dark:hover:text-brand-300">{{ $item['label'] }}</a>
-            @endforeach
-        </div>
-    </nav>
-</noscript>
+{{-- The fallback navigation: the off-canvas drawer cannot be opened
+     without JavaScript, so the main links live in the markup as a plain,
+     always usable navigation. It is a real element — the CSS hides it as
+     soon as the app is ready (see `html.app-ready [data-fallback-nav]` in
+     app.css), so the fallback and the drawer are never visible together. --}}
+<nav data-fallback-nav aria-label="فهرست اصلی (بدون جاوااسکریپت)"
+     class="border-b border-ink-900/10 bg-ink-50 dark:border-white/10 dark:bg-ink-950">
+    <div class="container-page flex flex-wrap items-center gap-x-5 gap-y-1 py-3 text-sm font-medium sm:gap-x-6">
+        @foreach ($navItems as $item)
+            <a href="{{ $item['href'] }}" @if ($item['active']) aria-current="page" @endif
+               class="rounded-md px-1 py-1 transition-colors hover:text-brand-600 dark:hover:text-brand-300 {{ $item['active'] ? 'text-brand-600 dark:text-brand-300' : 'text-ink-700 dark:text-ink-100' }}">
+                {{ $item['label'] }}
+            </a>
+        @endforeach
+    </div>
+</nav>
 
 {{-- Mobile drawer --}}
 <div data-drawer-backdrop class="fixed inset-0 z-[60] hidden bg-ink-950/60 opacity-0 transition-opacity duration-300"

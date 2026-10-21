@@ -79,7 +79,7 @@
                             icon="spark"
                             role="alert"
                             title="چند مورد نیاز به اصلاح دارد"
-                            description="لطفاً خطاهای مشخص‌شده در فرم را برطرف کنید و دوباره ارسال بفرستید." />
+                            description="لطفاً خطاهای مشخص‌شده در فرم را برطرف کنید و دوباره ارسال کنید." />
                     @endif
 
                     {{-- The action is origin relative on purpose: the form must

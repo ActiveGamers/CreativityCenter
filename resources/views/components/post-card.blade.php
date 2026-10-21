@@ -30,9 +30,6 @@
     $categoryValue = null;
     $categoryLabel = '';
 
-    /* The badge tone belongs to the category itself, not to this view. */
-    $tone = $category instanceof \App\Enums\PostCategory ? $category->tone() : 'brand';
-
     if (is_object($category) && method_exists($category, 'label')) {
         $categoryLabel = (string) $category->label();
         $categoryValue = $category instanceof \BackedEnum ? $category->value : null;
@@ -44,12 +41,20 @@
         $categoryLabel = $categories[$category] ?? $category;
     }
 
+    /* The badge tone belongs to the category itself, not to this view: an
+       enum instance and the plain string of the same category must resolve
+       to the very same tone. */
+    $tone = $category instanceof \App\Enums\PostCategory
+        ? $category->tone()
+        : (\App\Enums\PostCategory::tryFrom((string) $categoryValue)?->tone() ?? 'brand');
+
     $href = filled($slug) && \Illuminate\Support\Facades\Route::has('news.show')
         ? route('news.show', $slug)
         : url('/');
 
+    /* The publication date is shown in the Persian calendar. */
     $publishedLabel = $publishedAt
-        ? \Illuminate\Support\Carbon::parse($publishedAt)->format('Y/m/d')
+        ? \Morilog\Jalali\Jalalian::fromCarbon(\Illuminate\Support\Carbon::parse($publishedAt))->format('Y/m/d')
         : null;
 @endphp
 

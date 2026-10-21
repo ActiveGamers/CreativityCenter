@@ -6,11 +6,11 @@
 
     $albumNames = $albums->keys()->all();
 
-    /* The notice about the placeholders only makes sense while the gallery
-       still shows the seeded sample images: it disappears on its own as soon
-       as the real photos are published. */
-    $onlyPlaceholders = $images->isNotEmpty()
-        && $images->every(fn ($image): bool => str_starts_with((string) data_get($image, 'path', ''), '/images/gallery/placeholder'));
+    /* The notice about the placeholders only makes sense while a seeded
+       sample image is still on the page: it disappears on its own as soon
+       as the last placeholder is gone. */
+    $hasPlaceholders = $images->isNotEmpty()
+        && $images->contains(fn ($image): bool => str_starts_with((string) data_get($image, 'path', ''), '/images/gallery/placeholder'));
 @endphp
 
 <x-layouts.app
@@ -62,7 +62,7 @@
                     @endforeach
                 </div>
 
-                @if ($onlyPlaceholders)
+                @if ($hasPlaceholders)
                     <div class="mt-10">
                         <x-pages.notice
                             tone="accent"

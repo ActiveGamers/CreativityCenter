@@ -23,7 +23,7 @@ import { Toast } from './toast.js';
  * ------------------------------------------------------------------------- */
 const TEXT = {
     network: 'اتصال به سرور ناموفق بود. اتصال اینترنت خود را بررسی کنید و از خاموش بودن VPN مطمئن شوید.',
-    failed: 'نگهداری بیشتر اخبار ممکن نشد. لطفاً چند لحظه بعد دوباره تلاش کنید.',
+    failed: 'بارگذاری اخبار بیشتر ممکن نشد. لطفاً چند لحظه بعد دوباره تلاش کنید.',
 };
 
 /**
@@ -44,8 +44,9 @@ function createFilter(root) {
 
     const items = () => Array.from(root.querySelectorAll('[data-news-item]'));
 
-    /* The button carries the machine value of the category; its Persian label
-       is kept next to it, because the cards are marked with the label. */
+    /* The server-rendered buttons carry the slug of the category plus its
+       Persian label; the buttons that `sync()` adds carry the label only,
+       because the cards are marked with the label. */
     const labelOf = (button) => button?.dataset.newsFilterLabel || button?.textContent?.trim() || '';
 
     const apply = (value) => {

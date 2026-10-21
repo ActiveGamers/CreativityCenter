@@ -1,0 +1,272 @@
+/**
+ * News archive — progressive enhancement for the article list.
+ *
+ * Markup contract:
+ *   <div data-news-list>                          the grid of article cards
+ *   <div data-news-item data-category="…">        a single article
+ *   <div data-news-next-page="3">                 marker rendered by the
+ *                                                  posts partial (hidden)
+ *   <div data-news-skeleton>                      placeholders while loading
+ *   <div data-news-pagination>                    server-rendered pagination
+ *   <div data-news-more-wrapper>                  wrapper of the load button
+ *   <button data-news-more data-url data-next-page>
+ *   <button data-news-filter="…">                 category filter
+ *
+ * Without JavaScript the numbered pagination is the only navigation, every
+ * article stays visible and the category filter is simply absent.
+ */
+
+import { Toast } from './toast.js';
+
+/* ---------------------------------------------------------------------------
+ * Fixed wordings (AGENTS.md §10) — keep these strings exactly as written.
+ * ------------------------------------------------------------------------- */
+const TEXT = {
+    network: 'اتصال به سرور ناموفق بود. اتصال اینترنت خود را بررسی کنید و از خاموش بودن VPN مطمئن شوید.',
+    failed: 'بارگذاری اخبار بیشتر ممکن نشد. لطفاً چند لحظه بعد دوباره تلاش کنید.',
+};
+
+/**
+ * The category filter. It only hides or shows the cards that are already in
+ * the page; the content itself always comes from the server.
+ *
+ * @param {ParentNode} root
+ * @returns {{ apply: Function, sync: Function, current: Function }|null}
+ */
+function createFilter(root) {
+    const buttons = Array.from(root.querySelectorAll('[data-news-filter]'));
+
+    if (!buttons.length) {
+        return null;
+    }
+
+    let active = 'all';
+
+    const items = () => Array.from(root.querySelectorAll('[data-news-item]'));
+
+    /* The server-rendered buttons carry the slug of the category plus its
+       Persian label; the buttons that `sync()` adds carry the label only,
+       because the cards are marked with the label. */
+    const labelOf = (button) => button?.dataset.newsFilterLabel || button?.textContent?.trim() || '';
+
+    const apply = (value) => {
+        active = value || 'all';
+
+        const button = buttons.find((candidate) => candidate.dataset.newsFilter === active);
+        const label = labelOf(button);
+
+        items().forEach((item) => {
+            const category = item.dataset.category ?? '';
+            const visible =
+                active === 'all' || category === active || (label !== '' && category === label);
+
+            item.hidden = !visible;
+        });
+
+        buttons.forEach((candidate) => {
+            const isActive = candidate.dataset.newsFilter === active;
+
+            candidate.dataset.active = isActive ? 'true' : 'false';
+            candidate.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+        });
+    };
+
+    const sync = () => {
+        const known = new Set(buttons.map((button) => button.dataset.newsFilter));
+        const knownLabels = new Set(buttons.map((button) => labelOf(button)));
+        const template = buttons[0];
+        const container = template.parentElement;
+
+        if (!container) {
+            return;
+        }
+
+        items().forEach((item) => {
+            const category = item.dataset.category;
+
+            if (!category || known.has(category) || knownLabels.has(category)) {
+                return;
+            }
+
+            known.add(category);
+            knownLabels.add(category);
+
+            const button = document.createElement('button');
+
+            button.type = 'button';
+            button.dataset.newsFilter = category;
+            button.dataset.newsFilterLabel = category;
+            button.dataset.active = 'false';
+            button.setAttribute('aria-pressed', 'false');
+            button.className = template.className;
+            button.textContent = category;
+            button.addEventListener('click', () => apply(category));
+
+            buttons.push(button);
+            container.appendChild(button);
+        });
+    };
+
+    buttons.forEach((button) => {
+        button.addEventListener('click', () => apply(button.dataset.newsFilter || 'all'));
+    });
+
+    apply('all');
+
+    /* The filter is a pure client-side enhancement: without JavaScript the
+       buttons would do nothing, so the container stays hidden until the
+       filter is live. */
+    buttons[0]?.parentElement?.removeAttribute('hidden');
+
+    return {
+        apply,
+        sync,
+        current: () => active,
+    };
+}
+
+/**
+ * The "load more" button. It fetches the next page from the `news.more`
+ * endpoint and injects the returned markup into the list.
+ *
+ * @param {ParentNode} root
+ * @param {{ filter: object|null }} context
+ */
+function initLoadMore(root, context) {
+    const list = root.querySelector('[data-news-list]');
+    const button = root.querySelector('[data-news-more]');
+    const wrapper = root.querySelector('[data-news-more-wrapper]');
+    const skeleton = root.querySelector('[data-news-skeleton]');
+    const pagination = root.querySelector('[data-news-pagination]');
+
+    if (!list || !button) {
+        return null;
+    }
+
+    const baseUrl = button.dataset.url || '';
+
+    let nextPage = Number(button.dataset.nextPage || 2);
+    let loading = false;
+
+    const showSkeleton = (visible) => {
+        if (!skeleton) {
+            return;
+        }
+
+        skeleton.classList.toggle('hidden', !visible);
+    };
+
+    const showButton = (visible) => {
+        if (wrapper) {
+            wrapper.classList.toggle('hidden', !visible);
+            return;
+        }
+
+        button.classList.toggle('hidden', !visible);
+    };
+
+    const showPagination = (visible) => {
+        if (pagination) {
+            pagination.classList.toggle('hidden', !visible);
+        }
+    };
+
+    /* The numbered pagination is the fallback for visitors without
+       JavaScript; once the button works it only gets in the way. */
+    showPagination(false);
+    showButton(true);
+
+    button.addEventListener('click', async () => {
+        if (loading) {
+            return;
+        }
+
+        loading = true;
+        button.disabled = true;
+        button.dataset.loading = 'true';
+        showSkeleton(true);
+
+        try {
+            const url = new URL(baseUrl, window.location.origin);
+
+            url.searchParams.set('page', String(nextPage));
+
+            let response;
+            let html = '';
+
+            /* The body is read inside the same guard: a connection that drops
+               while the page is streaming must not fail silently. */
+            try {
+                response = await fetch(url.toString(), {
+                    method: 'GET',
+                    headers: {
+                        Accept: 'text/html',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    credentials: 'same-origin',
+                });
+
+                if (response.ok) {
+                    html = await response.text();
+                }
+            } catch (error) {
+                Toast.error(TEXT.network);
+                showPagination(true);
+                return;
+            }
+
+            if (!response.ok) {
+                Toast.error(TEXT.failed);
+                showPagination(true);
+                return;
+            }
+
+            /* The marker of the previous page is dropped before the new
+               markup arrives, so only the marker of the fresh page is read. */
+            list.querySelectorAll('[data-news-next-page]').forEach((marker) => {
+                marker.remove();
+            });
+
+            list.insertAdjacentHTML('beforeend', html);
+
+            /* The partial marks the next page; without a marker the last
+               page has been reached and the button retires itself. */
+            const marker = list.querySelector('[data-news-next-page]');
+
+            if (marker) {
+                nextPage = Number(marker.dataset.newsNextPage || nextPage + 1);
+                button.dataset.nextPage = String(nextPage);
+            } else {
+                showButton(false);
+            }
+
+            context.filter?.sync();
+            context.filter?.apply(context.filter.current());
+        } finally {
+            loading = false;
+            button.disabled = false;
+            delete button.dataset.loading;
+            showSkeleton(false);
+        }
+    });
+
+    return {
+        nextPage: () => nextPage,
+    };
+}
+
+/**
+ * Initialise the news page enhancements.
+ *
+ * @param {ParentNode} [root]
+ */
+export function initNews(root = document) {
+    if (!root.querySelector('[data-news-list]')) {
+        return;
+    }
+
+    const filter = createFilter(root);
+    const context = { filter };
+
+    initLoadMore(root, context);
+}

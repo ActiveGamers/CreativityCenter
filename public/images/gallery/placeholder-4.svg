@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600" role="img" aria-label="تصویر نمونه">
+  <rect width="800" height="600" fill="#F4F1EA" />
+  <g fill="#0E3A3F">
+    <path d="M120 460 L200 240 L280 460 Z" />
+    <path d="M520 460 L600 240 L680 460 Z" />
+  </g>
+  <path d="M320 460 L400 200 L480 460 Z" fill="#D89B3C" />
+  <rect x="120" y="490" width="560" height="16" fill="#0E3A3F" />
+  <rect x="120" y="522" width="360" height="10" fill="#D89B3C" />
+</svg>

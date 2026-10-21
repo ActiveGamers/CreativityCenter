@@ -1,0 +1,235 @@
+<?php
+
+return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | پیام‌های اعتبارسنجی
+    |--------------------------------------------------------------------------
+    |
+    | همه پیام‌های خطای اعتبارسنجی به زبان فارسی نوشته شده‌اند تا هیچ متن
+    | انگلیسی یا نام فنی فیلد در رابط کاربری نمایش داده نشود.
+    |
+    */
+
+    'accepted' => 'فیلد :attribute باید پذیرفته شود.',
+    'accepted_if' => 'فیلد :attribute باید هنگامی که :other برابر :value است پذیرفته شود.',
+    'active_url' => 'فیلد :attribute باید یک نشانی اینترنتی معتبر باشد.',
+    'after' => 'فیلد :attribute باید تاریخی پس از :date باشد.',
+    'after_or_equal' => 'فیلد :attribute باید تاریخی برابر یا پس از :date باشد.',
+    'alpha' => 'فیلد :attribute باید فقط شامل حروف باشد.',
+    'alpha_dash' => 'فیلد :attribute باید فقط شامل حروف، عدد، خط تیره و زیرخط باشد.',
+    'alpha_num' => 'فیلد :attribute باید فقط شامل حروف و عدد باشد.',
+    'any_of' => 'فیلد :attribute معتبر نیست.',
+    'array' => 'فیلد :attribute باید یک آرایه باشد.',
+    'array_keys' => 'فیلد :attribute باید فقط شامل کلیدهای زیر باشد: :values.',
+    'ascii' => 'فیلد :attribute باید فقط شامل حروف، عدد و نمادهای تک‌بایتی باشد.',
+    'base64' => 'فیلد :attribute باید یک رشته base64 معتبر باشد.',
+    'before' => 'فیلد :attribute باید تاریخی پیش از :date باشد.',
+    'before_or_equal' => 'فیلد :attribute باید تاریخی برابر یا پیش از :date باشد.',
+    'between' => [
+        'array' => 'فیلد :attribute باید بین :min تا :max عضو داشته باشد.',
+        'file' => 'حجم فیلد :attribute باید بین :min تا :max کیلوبایت باشد.',
+        'numeric' => 'فیلد :attribute باید بین :min تا :max باشد.',
+        'string' => 'فیلد :attribute باید بین :min تا :max نویسه باشد.',
+    ],
+    'boolean' => 'فیلد :attribute باید درست یا نادرست باشد.',
+    'can' => 'فیلد :attribute شامل مقداری غیرمجاز است.',
+    'confirmed' => 'تأیید فیلد :attribute با مقدار واردشده یکسان نیست.',
+    'contains' => 'فیلد :attribute یک مقدار لازم را ندارد.',
+    'current_password' => 'رمز عبور واردشده نادرست است.',
+    'date' => 'فیلد :attribute باید یک تاریخ معتبر باشد.',
+    'date_equals' => 'فیلد :attribute باید برابر با تاریخ :date باشد.',
+    'date_format' => 'فیلد :attribute باید با قالب :format مطابقت داشته باشد.',
+    'decimal' => 'فیلد :attribute باید :decimal رقم اعشار داشته باشد.',
+    'declined' => 'فیلد :attribute باید رد شود.',
+    'declined_if' => 'فیلد :attribute باید هنگامی که :other برابر :value است رد شود.',
+    'different' => 'فیلد :attribute و :other باید متفاوت باشند.',
+    'digits' => 'فیلد :attribute باید :digits رقم باشد.',
+    'digits_between' => 'فیلد :attribute باید بین :min تا :max رقم باشد.',
+    'dimensions' => 'ابعاد تصویر فیلد :attribute معتبر نیست.',
+    'distinct' => 'فیلد :attribute مقدار تکراری دارد.',
+    'doesnt_contain' => 'فیلد :attribute نباید شامل هیچ‌کدام از این موارد باشد: :values.',
+    'doesnt_end_with' => 'فیلد :attribute نباید با هیچ‌کدام از این موارد پایان یابد: :values.',
+    'doesnt_start_with' => 'فیلد :attribute نباید با هیچ‌کدام از این موارد آغاز شود: :values.',
+    'email' => 'فیلد :attribute باید یک نشانی ایمیل معتبر باشد.',
+    'encoding' => 'فیلد :attribute باید با کدگذاری :encoding ذخیره شود.',
+    'ends_with' => 'فیلد :attribute باید با یکی از این موارد پایان یابد: :values.',
+    'enum' => 'مقدار انتخاب‌شده برای :attribute معتبر نیست.',
+    'exists' => 'مقدار انتخاب‌شده برای :attribute معتبر نیست.',
+    'extensions' => 'فیلد :attribute باید یکی از این پسوندها را داشته باشد: :values.',
+    'file' => 'فیلد :attribute باید یک فایل باشد.',
+    'filled' => 'فیلد :attribute باید مقداری داشته باشد.',
+    'gt' => [
+        'array' => 'فیلد :attribute باید بیشتر از :value عضو داشته باشد.',
+        'file' => 'حجم فیلد :attribute باید بیشتر از :value کیلوبایت باشد.',
+        'numeric' => 'فیلد :attribute باید بیشتر از :value باشد.',
+        'string' => 'فیلد :attribute باید بیشتر از :value نویسه باشد.',
+    ],
+    'gte' => [
+        'array' => 'فیلد :attribute باید دست‌کم :value عضو داشته باشد.',
+        'file' => 'حجم فیلد :attribute باید دست‌کم :value کیلوبایت باشد.',
+        'numeric' => 'فیلد :attribute باید دست‌کم :value باشد.',
+        'string' => 'فیلد :attribute باید دست‌کم :value نویسه باشد.',
+    ],
+    'hex_color' => 'فیلد :attribute باید یک کد رنگ شانزده‌شانزدهی معتبر باشد.',
+    'image' => 'فیلد :attribute باید یک تصویر باشد.',
+    'in' => 'مقدار انتخاب‌شده برای :attribute معتبر نیست.',
+    'in_array' => 'فیلد :attribute باید در :other وجود داشته باشد.',
+    'in_array_keys' => 'فیلد :attribute باید دست‌کم یکی از کلیدهای زیر را داشته باشد: :values.',
+    'integer' => 'فیلد :attribute باید یک عدد صحیح باشد.',
+    'ip' => 'فیلد :attribute باید یک نشانی اینترنتی معتبر باشد.',
+    'ipv4' => 'فیلد :attribute باید یک نشانی IPv4 معتبر باشد.',
+    'ipv6' => 'فیلد :attribute باید یک نشانی IPv6 معتبر باشد.',
+    'json' => 'فیلد :attribute باید یک رشته JSON معتبر باشد.',
+    'list' => 'فیلد :attribute باید یک فهرست باشد.',
+    'lowercase' => 'فیلد :attribute باید با حروف کوچک نوشته شود.',
+    'lt' => [
+        'array' => 'فیلد :attribute باید کمتر از :value عضو داشته باشد.',
+        'file' => 'حجم فیلد :attribute باید کمتر از :value کیلوبایت باشد.',
+        'numeric' => 'فیلد :attribute باید کمتر از :value باشد.',
+        'string' => 'فیلد :attribute باید کمتر از :value نویسه باشد.',
+    ],
+    'lte' => [
+        'array' => 'فیلد :attribute نباید بیشتر از :value عضو داشته باشد.',
+        'file' => 'حجم فیلد :attribute نباید بیشتر از :value کیلوبایت باشد.',
+        'numeric' => 'فیلد :attribute نباید بیشتر از :value باشد.',
+        'string' => 'فیلد :attribute نباید بیشتر از :value نویسه باشد.',
+    ],
+    'mac_address' => 'فیلد :attribute باید یک نشانی MAC معتبر باشد.',
+    'max' => [
+        'array' => 'فیلد :attribute نباید بیشتر از :max عضو داشته باشد.',
+        'file' => 'حجم فیلد :attribute نباید بیشتر از :max کیلوبایت باشد.',
+        'numeric' => 'فیلد :attribute نباید بیشتر از :max باشد.',
+        'string' => 'فیلد :attribute نباید بیشتر از :max نویسه باشد.',
+    ],
+    'max_digits' => 'فیلد :attribute نباید بیشتر از :max رقم داشته باشد.',
+    'mimes' => 'فیلد :attribute باید از این نوع‌ها باشد: :values.',
+    'mimetypes' => 'فیلد :attribute باید از این نوع‌ها باشد: :values.',
+    'min' => [
+        'array' => 'فیلد :attribute باید دست‌کم :min عضو داشته باشد.',
+        'file' => 'حجم فیلد :attribute باید دست‌کم :min کیلوبایت باشد.',
+        'numeric' => 'فیلد :attribute باید دست‌کم :min باشد.',
+        'string' => 'فیلد :attribute باید دست‌کم :min نویسه باشد.',
+    ],
+    'min_digits' => 'فیلد :attribute باید دست‌کم :min رقم داشته باشد.',
+    'missing' => 'فیلد :attribute باید حذف شود.',
+    'missing_if' => 'فیلد :attribute باید هنگامی که :other برابر :value است حذف شود.',
+    'missing_unless' => 'فیلد :attribute باید مگر در صورتی که :other برابر :values باشد حذف شود.',
+    'missing_with' => 'فیلد :attribute باید هنگامی که :values موجود است حذف شود.',
+    'missing_with_all' => 'فیلد :attribute باید هنگامی که همه :values موجود هستند حذف شود.',
+    'multiple_of' => 'فیلد :attribute باید مضربی از :value باشد.',
+    'not_in' => 'مقدار انتخاب‌شده برای :attribute معتبر نیست.',
+    'not_regex' => 'قالب فیلد :attribute معتبر نیست.',
+    'numeric' => 'فیلد :attribute باید یک عدد باشد.',
+    'password' => [
+        'letters' => 'فیلد :attribute باید دست‌کم یک حرف داشته باشد.',
+        'mixed' => 'فیلد :attribute باید دست‌کم یک حرف بزرگ و یک حرف کوچک داشته باشد.',
+        'numbers' => 'فیلد :attribute باید دست‌کم یک رقم داشته باشد.',
+        'symbols' => 'فیلد :attribute باید دست‌کم یک نماد داشته باشد.',
+        'uncompromised' => 'رمز عبور واردشده در یک نشت داده‌ای دیده شده است. لطفاً رمز عبور دیگری انتخاب کنید.',
+    ],
+    'present' => 'فیلد :attribute باید موجود باشد.',
+    'present_if' => 'فیلد :attribute باید هنگامی که :other برابر :value است موجود باشد.',
+    'present_unless' => 'فیلد :attribute باید مگر در صورتی که :other برابر :value باشد موجود باشد.',
+    'present_with' => 'فیلد :attribute باید هنگامی که :values موجود است موجود باشد.',
+    'present_with_all' => 'فیلد :attribute باید هنگامی که همه :values موجود هستند موجود باشد.',
+    'prohibited' => 'فیلد :attribute مجاز نیست.',
+    'prohibited_if' => 'فیلد :attribute هنگامی که :other برابر :value است مجاز نیست.',
+    'prohibited_if_accepted' => 'فیلد :attribute هنگامی که :other پذیرفته شده مجاز نیست.',
+    'prohibited_if_declined' => 'فیلد :attribute هنگامی که :other رد شده مجاز نیست.',
+    'prohibited_unless' => 'فیلد :attribute تنها در صورتی مجاز است که :other یکی از :values باشد.',
+    'prohibits' => 'فیلد :attribute وجود :other را ممنوع می‌کند.',
+    'regex' => 'قالب فیلد :attribute معتبر نیست.',
+    'required' => 'فیلد :attribute الزامی است.',
+    'required_array_keys' => 'فیلد :attribute باید شامل این موارد باشد: :values.',
+    'required_if' => 'فیلد :attribute هنگامی که :other برابر :value است الزامی است.',
+    'required_if_accepted' => 'فیلد :attribute هنگامی که :other پذیرفته شده الزامی است.',
+    'required_if_declined' => 'فیلد :attribute هنگامی که :other رد شده الزامی است.',
+    'required_unless' => 'فیلد :attribute مگر در صورتی که :other یکی از :values باشد الزامی است.',
+    'required_with' => 'فیلد :attribute هنگامی که :values موجود است الزامی است.',
+    'required_with_all' => 'فیلد :attribute هنگامی که همه :values موجود هستند الزامی است.',
+    'required_without' => 'فیلد :attribute هنگامی که :values موجود نیست الزامی است.',
+    'required_without_all' => 'فیلد :attribute هنگامی که هیچ‌کدام از :values موجود نیستند الزامی است.',
+    'same' => 'فیلد :attribute باید با :other یکسان باشد.',
+    'size' => [
+        'array' => 'فیلد :attribute باید :size عضو داشته باشد.',
+        'file' => 'حجم فیلد :attribute باید :size کیلوبایت باشد.',
+        'numeric' => 'فیلد :attribute باید برابر :size باشد.',
+        'string' => 'فیلد :attribute باید :size نویسه باشد.',
+    ],
+    'starts_with' => 'فیلد :attribute باید با یکی از این موارد آغاز شود: :values.',
+    'string' => 'فیلد :attribute باید یک متن باشد.',
+    'timezone' => 'فیلد :attribute باید یک منطقه زمانی معتبر باشد.',
+    'unique' => 'مقدار :attribute قبلاً استفاده شده است.',
+    'uploaded' => 'بارگذاری فیلد :attribute ناموفق بود.',
+    'uppercase' => 'فیلد :attribute باید با حروف بزرگ نوشته شود.',
+    'url' => 'فیلد :attribute باید یک نشانی اینترنتی معتبر باشد.',
+    'ulid' => 'فیلد :attribute باید یک شناسه ULID معتبر باشد.',
+    'uuid' => 'فیلد :attribute باید یک شناسه UUID معتبر باشد.',
+
+    /*
+    |--------------------------------------------------------------------------
+    | پیام‌های اختصاصی اعتبارسنجی
+    |--------------------------------------------------------------------------
+    */
+
+    'custom' => [
+        'attribute-name' => [
+            'rule-name' => 'custom-message',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | نام فیلدها به زبان فارسی
+    |--------------------------------------------------------------------------
+    |
+    | هر فیلدی که در فرم‌های این وب‌سایت استفاده می‌شود باید در این فهرست
+    | معرفی شود تا نام انگلیسی آن در پیام خطا نمایش داده نشود.
+    |
+    */
+
+    'attributes' => [
+        'name' => 'نام و نام خانوادگی',
+        'phone' => 'شماره موبایل',
+        'email' => 'نشانی ایمیل',
+        'subject' => 'موضوع',
+        'message' => 'متن پیام',
+        'student_name' => 'نام و نام خانوادگی دانش‌آموز',
+        'parent_name' => 'نام و نام خانوادگی والدین',
+        'grade_level' => 'پایه تحصیلی',
+        'major_id' => 'رشته تحصیلی',
+        'note' => 'توضیحات',
+        'title' => 'عنوان',
+        'slug' => 'نشانی صفحه',
+        'body' => 'متن',
+        'excerpt' => 'خلاصه',
+        'category' => 'دسته‌بندی',
+        'cover_image' => 'تصویر شاخص',
+        'published_at' => 'زمان انتشار',
+        'is_published' => 'وضعیت انتشار',
+        'album' => 'آلبوم',
+        'path' => 'مسیر تصویر',
+        'caption' => 'توضیح تصویر',
+        'role' => 'سمت',
+        'photo' => 'تصویر',
+        'bio' => 'معرفی',
+        'status' => 'وضعیت',
+        'scope' => 'سطح',
+        'rank_label' => 'عنوان رتبه',
+        'year' => 'سال',
+        'competition' => 'مسابقه',
+        'value' => 'مقدار',
+        'label' => 'برچسب',
+        'description' => 'توضیح',
+        'icon' => 'نماد',
+        'order' => 'ترتیب',
+        'seats' => 'ظرفیت',
+        'grade' => 'پایه',
+        'weekly_hours' => 'ساعت در هفته',
+        'major' => 'رشته',
+        'course' => 'درس',
+    ],
+
+];

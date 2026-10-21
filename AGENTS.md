@@ -247,9 +247,11 @@ The site runs inside Docker containers. Run `artisan`, `composer`, and `npm` com
 appropriate container instead of the host machine.
 
 - Only when the required container is **not available** may a command run at the project root.
-- This repository currently has no Docker Compose file; until one exists, commands run at the
-  project root (the explicitly allowed fallback). If a Compose file is added, this section
-  applies to it immediately.
+- This repository ships `docker-compose.yml`. Use the matching service for every command:
+  `docker compose exec app php artisan …`, `docker compose exec app composer …`,
+  `docker compose exec app npm run build`. The `node` service (Vite dev server) and the `db`
+  service (MySQL) are optional profiles. The project root is only the fallback when the
+  containers are not running at all.
 
 ### Always rebuild the frontend after any change
 After **every** change to the project — PHP, Blade, JS, CSS, config, or any other file — run
@@ -392,16 +394,17 @@ contain parts 1 and 2; add part 3 only when it genuinely matters.
    Good: `صفحه را یک‌بار تازه‌سازی کنید و دوباره تلاش کنید.`
 3. **Where to get help?** — ONLY for errors the user cannot resolve alone (payment charge
    unverifiable, account blocked, repeated failure of a critical action). Render as a real link to
-   the contact page (`route('contact')` in Blade; absolute `/contact` href in JS toasts where HTML
-   is allowed). NEVER add part 3 to self-service errors (offline, validation, expired session,
+   the contact page (`route('contact.index')` in Blade; absolute `/contact` href in JS toasts where
+   HTML is allowed). NEVER add part 3 to self-service errors (offline, validation, expired session,
    wrong credentials) — it trains users to ignore the help link.
 
 ### Fixed wordings (use exactly)
 - **Expired session in AJAX/fetch (HTTP 419):** `خطایی در پردازش رخ داد؛ لطفاً لحظاتی دیگر دوباره تلاش کنید یا صفحه را تازه‌سازی کنید.` — no part 3. If the user was logged out, append:
   `اگر از حساب خارج شده‌اید، دوباره وارد شوید.`
 - **Lost connection / network failure:** `اتصال به سرور ناموفق بود. اتصال اینترنت خود را بررسی کنید و از خاموش بودن VPN مطمئن شوید.` — no part 3.
-- **Full-page 419 view** keeps its three-button pattern (refresh / re-login / home) and must
-  always offer a contact link in the footer buttons.
+- **Full-page 419 view** offers «تلاش دوباره» and «صفحهٔ اصلی» only. This is a public site with
+  no login, so there is no re-login button; and an expired session is a self-service error, so the
+  view must **not** offer a contact link.
 
 ### Implementation rules
 - **Validation:** keep all `messages()`/`attributes()` Persian so `:attribute` never renders a raw

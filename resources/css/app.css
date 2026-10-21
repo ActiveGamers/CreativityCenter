@@ -534,9 +534,13 @@
     }
 
     /* The fallback navigation is always part of the markup: it takes over
-       when the JavaScript never runs. As soon as the app is ready the
-       drawer takes over and the fallback steps out of the way, so the two
-       are never visible at the same time. */
+       when the JavaScript never runs. With JavaScript available the layout's
+       bootstrap class (`html.js`) hides it immediately, before the first paint,
+       and the app-ready class keeps it hidden once the drawer has taken over,
+       so the fallback and the drawer are never visible at the same time.
+       Without JavaScript the fallback remains visible as a delayed CSS-only
+       fallback. */
+    html.js [data-fallback-nav],
     html.app-ready [data-fallback-nav] {
         display: none;
     }

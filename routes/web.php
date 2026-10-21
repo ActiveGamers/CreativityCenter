@@ -29,7 +29,11 @@ Route::get('/news/{post:slug}', [PostController::class, 'show'])->name('news.sho
 Route::get('/gallery', [GalleryController::class, 'index'])->name('gallery');
 
 Route::get('/admission', [AdmissionController::class, 'index'])->name('admission.index');
-Route::post('/admission', [AdmissionController::class, 'store'])->name('admission.store');
+Route::post('/admission', [AdmissionController::class, 'store'])
+    ->middleware('throttle:admission')
+    ->name('admission.store');
 
 Route::get('/contact', [ContactController::class, 'index'])->name('contact.index');
-Route::post('/contact', [ContactController::class, 'store'])->name('contact.store');
+Route::post('/contact', [ContactController::class, 'store'])
+    ->middleware('throttle:contact')
+    ->name('contact.store');

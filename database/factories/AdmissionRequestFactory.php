@@ -16,6 +16,9 @@ class AdmissionRequestFactory extends Factory
     /**
      * Define the model's default state.
      *
+     * The request is attached to a major that already exists, so a batch of
+     * requests never creates a major for every single one of them.
+     *
      * @return array<string, mixed>
      */
     public function definition(): array
@@ -26,7 +29,7 @@ class AdmissionRequestFactory extends Factory
             'phone' => fake()->numerify('09#########'),
             'email' => fake()->safeEmail(),
             'grade_level' => fake()->randomElement(GradeLevel::cases()),
-            'major_id' => Major::factory(),
+            'major_id' => Major::query()->orderBy('id')->value('id'),
             'note' => null,
             'status' => AdmissionStatus::New,
         ];

@@ -1,11 +1,10 @@
 @php
-    $exceptionMessage = isset($exception) && $exception instanceof \Throwable ? $exception->getMessage() : '';
-
-    $isPersian = preg_match('/[\x{0600}-\x{06FF}]/u', $exceptionMessage) === 1;
-
-    $serverMessage = $isPersian
-        ? $exceptionMessage
-        : 'مشکلی در نمایش این صفحه پیش آمد. لطفاً چند لحظه بعد دوباره تلاش کنید.';
+    /*
+     * The technical detail of the failure stays in the log: a 500 can carry
+     * a raw SQL message, a file path or any other internal information, and
+     * the page must never show it to the visitor.
+     */
+    $serverMessage = 'مشکلی در نمایش این صفحه پیش آمد. لطفاً چند لحظه بعد دوباره تلاش کنید.';
 @endphp
 
 <x-layouts.app

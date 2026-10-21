@@ -24,13 +24,13 @@ class HomeController extends Controller
                 ->get(),
             'majors' => Major::query()
                 ->active()
-                ->select(['id', 'title', 'slug', 'subtitle', 'summary', 'icon', 'accent', 'order'])
+                ->select(['id', 'title', 'slug', 'subtitle', 'summary', 'icon', 'accent', 'seats', 'order'])
                 ->withCount('courses')
                 ->orderBy('order')
                 ->orderBy('id')
                 ->get(),
             'achievements' => Achievement::query()
-                ->select(['id', 'title', 'description', 'scope', 'rank_label', 'year', 'order'])
+                ->select(['id', 'title', 'description', 'scope', 'rank_label', 'year', 'competition', 'order'])
                 ->orderByDesc('year')
                 ->orderBy('order')
                 ->orderBy('id')

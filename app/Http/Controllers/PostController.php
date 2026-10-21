@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\PostCategory;
 use App\Models\Post;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 
 class PostController extends Controller
 {
@@ -27,6 +29,7 @@ class PostController extends Controller
 
         return view('pages.news', [
             'posts' => $posts,
+            'categories' => $this->categories(),
         ]);
     }
 
@@ -36,7 +39,7 @@ class PostController extends Controller
     public function show(Post $post): View
     {
         abort_unless(
-            $post->is_published,
+            $post->isPubliclyVisible(),
             404,
             'مطلب مورد نظر یافت نشد یا دیگر در دسترس نیست. لطفاً فهرست اخبار را مشاهده کنید.',
         );
@@ -63,5 +66,22 @@ class PostController extends Controller
         return view('partials.posts.list', [
             'posts' => $posts,
         ]);
+    }
+
+    /**
+     * The categories of every published post, sorted by their Persian label.
+     *
+     * @return Collection<int, PostCategory>
+     */
+    protected function categories(): Collection
+    {
+        return Post::query()
+            ->published()
+            ->distinct()
+            ->pluck('category')
+            ->filter(fn (mixed $category): bool => $category instanceof PostCategory)
+            ->unique(fn (PostCategory $category): string => $category->value)
+            ->sortBy(fn (PostCategory $category): string => $category->label())
+            ->values();
     }
 }

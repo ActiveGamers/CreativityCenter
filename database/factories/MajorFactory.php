@@ -27,7 +27,7 @@ class MajorFactory extends Factory
         [
             'title' => 'مکاترونیک',
             'slug' => 'mechatronics',
-            'icon' => 'mecatronics',
+            'icon' => 'mechatronics',
             'accent' => 'accent',
             'subtitle' => 'تلاقی مکانیک، الکترونیک و کنترل',
             'summary' => 'طراحی و کنترل سامانه‌های صنعتی هوشمند با تکیه بر الکترونیک، کنترل و اتوماسیون.',
@@ -41,11 +41,11 @@ class MajorFactory extends Factory
      */
     public function definition(): array
     {
-        $major = fake()->unique()->randomElement(self::MAJORS);
+        $major = fake()->randomElement(self::MAJORS);
 
         return [
             'title' => $major['title'],
-            'slug' => $major['slug'],
+            'slug' => $major['slug'].'-'.fake()->unique()->numberBetween(1, PHP_INT_MAX),
             'subtitle' => $major['subtitle'],
             'summary' => $major['summary'],
             'description' => $major['summary'].' دانش‌آموزان این رشته در سه پایه دهم، یازدهم و دوازدهم با مبانی تخصصی، کارگاه‌های عملی و پروژه‌های پایانی آماده ورود به بازار کار می‌شوند.',

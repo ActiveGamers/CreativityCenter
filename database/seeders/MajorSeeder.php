@@ -34,7 +34,7 @@ class MajorSeeder extends Seeder
             'subtitle' => 'تلاقی مکانیک، الکترونیک و کنترل',
             'summary' => 'طراحی و کنترل سامانه‌های صنعتی هوشمند با تکیه بر الکترونیک، کنترل و اتوماسیون.',
             'description' => 'رشته مکاترونیک با ترکیب دانش مکانیک و الکترونیک، زمینه ساخت و کنترل سامانه‌های صنعتی هوشمند را فراهم می‌کند. دانش‌آموزان در این رشته با مدارهای آنالوگ و دیجیتال، کنترل صنعتی، رباتیک و اتوماسیون آشنا می‌شوند و در کارگاه‌های عملی، سیستم‌های مکاترونیکی واقعی را طراحی و راه‌اندازی می‌کنند.',
-            'icon' => 'mecatronics',
+            'icon' => 'mechatronics',
             'accent' => 'accent',
             'seats' => 30,
             'order' => 2,
@@ -44,6 +44,9 @@ class MajorSeeder extends Seeder
 
     /**
      * Run the database seeds.
+     *
+     * The seeder is keyed on the slug of the major, so a re-run corrects the
+     * rows that are already in the database instead of adding new ones.
      */
     public function run(): void
     {

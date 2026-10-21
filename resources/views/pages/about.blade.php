@@ -102,44 +102,49 @@
             <x-section-heading
                 kicker="رشته‌های آموزشی"
                 title="یادگیری در کارگاه، نه فقط در کلاس"
-                description="برنامه آموزشی هنرستان بر پایه کارگاه‌های عملی تنظیم شده است؛ دانش‌آموز در هر دو رشته با ابزار واقعی کار می‌کند."
+                description="برنامه آموزشی هنرستان بر پایه کارگاه‌های عملی تنظیم شده است؛ دانش‌آموز در هر رشتهٔ تحصیلی با ابزار واقعی کار می‌کند."
                 data-reveal
             />
 
+            @php
+                $majorTones = [
+                    'brand' => 'bg-brand-50 text-brand-600 dark:bg-brand-950/60 dark:text-brand-300',
+                    'accent' => 'bg-accent-50 text-accent-600 dark:bg-accent-950/60 dark:text-accent-300',
+                    'ink' => 'bg-ink-100 text-ink-700 dark:bg-ink-800 dark:text-ink-100',
+                    'success' => 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-300',
+                ];
+            @endphp
+
             <div class="mt-10 grid gap-5 md:grid-cols-2 lg:gap-6">
-                <article class="surface-card flex flex-col gap-5 p-6 transition-shadow duration-300 hover:shadow-[var(--shadow-card-hover)] sm:p-7" data-reveal>
-                    <div class="flex items-center gap-4">
-                        <span class="grid size-12 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-600 dark:bg-brand-950/60 dark:text-brand-300">
-                            <x-icon name="network" class="size-6" />
-                        </span>
+                @foreach ($majors as $major)
+                    @php
+                        $tone = $majorTones[$major->accent] ?? $majorTones['brand'];
+                        $icon = filled($major->icon) ? $major->icon : 'chip';
+                        $subtitle = filled($major->subtitle) ? $major->subtitle : 'رشته تحصیلی هنرستان';
+                        $paragraph = filled($major->description)
+                            ? $major->description
+                            : (filled($major->summary)
+                                ? $major->summary
+                                : 'برنامهٔ آموزشی این رشته پس از تأیید کادر آموزشی در همین بخش معرفی می‌شود.');
+                    @endphp
 
-                        <div>
-                            <h3 class="font-display text-lg font-bold leading-8 text-ink-900 dark:text-white">شبکه و نرم‌افزار رایانه</h3>
-                            <p class="mt-1 text-xs text-slate-500 dark:text-ink-300">طراحی، پیاده‌سازی و مدیریت زیرساخت‌های شبکه</p>
+                    <article class="surface-card flex flex-col gap-5 p-6 transition-shadow duration-300 hover:shadow-[var(--shadow-card-hover)] sm:p-7" data-reveal style="--reveal-delay: {{ $loop->index * 110 }}ms">
+                        <div class="flex items-center gap-4">
+                            <span class="grid size-12 shrink-0 place-items-center rounded-xl {{ $tone }}">
+                                <x-icon :name="$icon" class="size-6" />
+                            </span>
+
+                            <div>
+                                <h3 class="font-display text-lg font-bold leading-8 text-ink-900 dark:text-white">{{ $major->title }}</h3>
+                                <p class="mt-1 text-xs text-slate-500 dark:text-ink-300">{{ $subtitle }}</p>
+                            </div>
                         </div>
-                    </div>
 
-                    <p class="text-sm leading-8 text-slate-600 dark:text-ink-200">
-                        آموزش در این رشته از مبانی سخت‌افزار و سیستم‌عامل آغاز می‌شود و در پایه دوازدهم به مباحث پیشرفته مانند امنیت شبکه، مدیریت سرور و پروژه‌های عملی می‌رسد.
-                    </p>
-                </article>
-
-                <article class="surface-card flex flex-col gap-5 p-6 transition-shadow duration-300 hover:shadow-[var(--shadow-card-hover)] sm:p-7" data-reveal style="--reveal-delay: 110ms">
-                    <div class="flex items-center gap-4">
-                        <span class="grid size-12 shrink-0 place-items-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-950/60 dark:text-accent-300">
-                            <x-icon name="mechatronics" class="size-6" />
-                        </span>
-
-                        <div>
-                            <h3 class="font-display text-lg font-bold leading-8 text-ink-900 dark:text-white">مکاترونیک</h3>
-                            <p class="mt-1 text-xs text-slate-500 dark:text-ink-300">تلاقی مکانیک، الکترونیک و کنترل</p>
-                        </div>
-                    </div>
-
-                    <p class="text-sm leading-8 text-slate-600 dark:text-ink-200">
-                        با ترکیب دانش مکانیک و الکترونیک، دانش‌آموز با مدارهای آنالوگ و دیجیتال، کنترل صنعتی، رباتیک و اتوماسیون آشنا می‌شود و در کارگاه‌های عملی، سیستم‌های مکاترونیکی واقعی را طراحی و راه‌اندازی می‌کند.
-                    </p>
-                </article>
+                        <p class="text-sm leading-8 text-slate-600 dark:text-ink-200">
+                            {{ $paragraph }}
+                        </p>
+                    </article>
+                @endforeach
             </div>
 
             <div class="mt-9" data-reveal>

@@ -13,15 +13,21 @@ class PostSeeder extends Seeder
     use WithoutModelEvents;
 
     /**
-     * The introductory paragraph of the school, reused in the seeded posts.
+     * The introductory paragraph of the school.
+     *
+     * The placeholder posts announce no fact, so they do not repeat it; the
+     * constant stays here as the single reference of the school introduction.
      */
     public const INTRO = SchoolContent::INTRO;
 
     /**
      * The sample posts of the website.
      *
-     * NOTE: These are sample posts written for the layout only. The school
-     * still has to send the real news, announcements and reports.
+     * NOTE: These posts are placeholders for the layout only. The school has
+     * not sent any news yet, so every one of them says plainly that it is a
+     * sample and that it announces no fact. The real news replaces them as
+     * soon as the school confirms it; until then the page shows the layout
+     * without publishing a made-up announcement.
      *
      * @return array<int, array<string, mixed>>
      */
@@ -29,30 +35,30 @@ class PostSeeder extends Seeder
     {
         return [
             [
-                'title' => 'آغاز سال تحصیلی جدید در هنرستان جوار شرکت پالایش نفت بندرعباس',
+                'title' => 'نمونه — جای خبرهای هنرستان',
                 'slug' => 'start-of-new-school-year',
-                'excerpt' => 'دانش‌آموزان هنرستان جوار شرکت پالایش نفت بندرعباس سال تحصیلی جدید را با حضور در کلاس‌های تخصصی رشته‌های شبکه و نرم‌افزار رایانه و مکاترونیک آغاز کردند.',
-                'body' => self::INTRO."\n\n".'در سال تحصیلی جدید، دانش‌آموزان این هنرستان در سه پایه دهم، یازدهم و دوازدهم در دو رشته شبکه و نرم‌افزار رایانه و مکاترونیک مشغول به تحصیل شدند. برنامه آموزشی این سال بر پایه کارگاه‌های عملی آزمایشگاه شبکه و کارگاه‌های کنترل صنعتی و رباتیک تنظیم شده است.',
+                'excerpt' => 'این متن فقط نمونه‌ای برای بررسی چیدمان بخش اخبار است و هیچ خبری را اعلام نمی‌کند.',
+                'body' => 'این مطلب صرفاً نمونه‌ای برای بررسی چیدمان بخش اخبار است و هیچ خبر، رویداد یا اطلاعیه‌ای را اعلام نمی‌کند.'."\n\n".'اخبار، اطلاعیه‌ها و گزارش‌های واقعی هنرستان پس از تأیید کادر آموزشی در همین بخش منتشر خواهد شد.',
                 'category' => PostCategory::News,
                 'cover_image' => null,
                 'published_at' => now()->subDays(18),
                 'is_published' => true,
             ],
             [
-                'title' => 'اطلاعیه ثبت‌نام پایه دهم در سال تحصیلی جدید',
+                'title' => 'نمونه — جای اطلاعیه‌های ثبت‌نام',
                 'slug' => 'registration-notice-for-tenth-grade',
-                'excerpt' => 'ثبت‌نام دانش‌آموزان پایه دهم در دو رشته شبکه و نرم‌افزار رایانه و مکاترونیک از طریق مراجعه به دفتر هنرستان انجام می‌شود.',
-                'body' => 'به خانواده‌های محترم دانش‌آموزان و داوطلبان ورود به پایه دهم اطلاع می‌دهیم که ثبت‌نام سال تحصیلی جدید در دو رشته شبکه و نرم‌افزار رایانه و مکاترونیک آغاز شده است. برای دریافت راهنمایی درباره مدارک مورد نیاز و ظرفیت پذیرش هر رشته، می‌توانید از طریق فرم ثبت‌نام همین وب‌سایت یا با مراجعه به دفتر هنرستان در نشانی «میدان ۹ دی، بندرعباس، هرمزگان» با کادر آموزشی تماس بگیرید.',
+                'excerpt' => 'این متن فقط نمونه‌ای برای بررسی چیدمان اطلاعیه‌هاست و هیچ مهلت یا شرایطی را اعلام نمی‌کند.',
+                'body' => 'این اطلاعیه صرفاً نمونه‌ای برای بررسی چیدمان بخش اطلاعیه‌هاست و هیچ مهلت، شرایط یا شیوهٔ ثبت‌نامی را اعلام نمی‌کند.'."\n\n".'اطلاعیهٔ رسمی ثبت‌نام پس از تأیید کادر آموزشی منتشر می‌شود. تا آن زمان، برای پرسش دربارهٔ ثبت‌نام می‌توانید از فرم مشاوره و تماس همین وب‌سایت استفاده کنید.',
                 'category' => PostCategory::Announcement,
                 'cover_image' => null,
                 'published_at' => now()->subDays(9),
                 'is_published' => true,
             ],
             [
-                'title' => 'کسب رتبه اول کشوری در سال تحصیلی ۱۴۰۳',
+                'title' => 'نمونه — جای گزارش‌های افتخارآفرینی',
                 'slug' => 'first-national-rank-in-1403',
-                'excerpt' => 'هنرستان جوار شرکت پالایش نفت بندرعباس موفق شد در سال تحصیلی ۱۴۰۳ رتبه اول کشوری را به خود اختصاص دهد.',
-                'body' => self::INTRO."\n\n".'دستاورد تازه هنرستان جوار شرکت پالایش نفت بندرعباس، کسب رتبه اول کشوری در سال تحصیلی ۱۴۰۳ است. این موفقیت در کنار رکورد سه‌ساله هنرستان که شامل بیش از ۲۰۰ رتبه سه‌رقمی، بیش از ۵۰ رتبه دو‌رقمی و ۳ رتبه تک‌رقمی کشوری است، جایگاه این هنرستان را در میان برترین هنرستان‌های کشور تثبیت می‌کند.',
+                'excerpt' => 'این متن فقط نمونه‌ای برای بررسی چیدمان گزارش‌های افتخارآفرینی است و دستاوردی را اعلام نمی‌کند.',
+                'body' => 'این مطلب صرفاً نمونه‌ای برای بررسی چیدمان گزارش افتخارآفرینی است و دستاوردی را اعلام نمی‌کند.'."\n\n".'رتبه‌های ثبت‌شدهٔ هنرستان در بخش «افتخارات» همین وب‌سایت آمده است و گزارش کامل هر موفقیت پس از تأیید کادر آموزشی در همین بخش منتشر می‌شود.',
                 'category' => PostCategory::Achievement,
                 'cover_image' => null,
                 'published_at' => now()->subDays(3),

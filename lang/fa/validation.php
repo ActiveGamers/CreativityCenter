@@ -115,7 +115,7 @@ return [
     'min_digits' => 'فیلد :attribute باید دست‌کم :min رقم داشته باشد.',
     'missing' => 'فیلد :attribute باید حذف شود.',
     'missing_if' => 'فیلد :attribute باید هنگامی که :other برابر :value است حذف شود.',
-    'missing_unless' => 'فیلد :attribute باید مگر در صورتی که :other برابر :values باشد حذف شود.',
+    'missing_unless' => 'فیلد :attribute باید مگر در صورتی که :other برابر :value باشد حذف شود.',
     'missing_with' => 'فیلد :attribute باید هنگامی که :values موجود است حذف شود.',
     'missing_with_all' => 'فیلد :attribute باید هنگامی که همه :values موجود هستند حذف شود.',
     'multiple_of' => 'فیلد :attribute باید مضربی از :value باشد.',

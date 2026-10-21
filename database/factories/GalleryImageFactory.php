@@ -17,12 +17,10 @@ class GalleryImageFactory extends Factory
      */
     public function definition(): array
     {
-        $number = fake()->unique()->numberBetween(1, 6);
-
         return [
             'title' => 'تصویر آرشیو هنرستان',
             'caption' => 'تصویر نمونه که جایگزین تصاویر واقعی مدرسه خواهد شد.',
-            'path' => '/images/gallery/placeholder-'.$number.'.svg',
+            'path' => '/images/gallery/placeholder-'.fake()->numberBetween(1, PHP_INT_MAX).'.svg',
             'album' => 'آموزشی',
             'order' => fake()->numberBetween(1, 10),
             'is_published' => true,

@@ -16,7 +16,7 @@ class EducationController extends Controller
     {
         $majors = Major::query()
             ->active()
-            ->select(['id', 'title', 'slug', 'subtitle', 'summary', 'icon', 'accent', 'order'])
+            ->select(['id', 'title', 'slug', 'subtitle', 'summary', 'icon', 'accent', 'seats', 'order'])
             ->withCount('courses')
             ->orderBy('order')
             ->orderBy('id')

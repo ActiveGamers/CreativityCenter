@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Support\PersianDigits;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreContactMessage extends FormRequest
@@ -12,6 +13,21 @@ class StoreContactMessage extends FormRequest
     public function authorize(): bool
     {
         return true;
+    }
+
+    /**
+     * Normalise the mobile number before the validation.
+     *
+     * The visitor may type the number with the Persian or the Arabic-Indic
+     * digits; the stored number is always written with Latin digits.
+     */
+    protected function prepareForValidation(): void
+    {
+        if (is_string($this->phone)) {
+            $this->merge([
+                'phone' => PersianDigits::toLatin($this->phone),
+            ]);
+        }
     }
 
     /**

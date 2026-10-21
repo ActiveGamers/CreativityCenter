@@ -68,6 +68,11 @@ class MajorCourseSeeder extends Seeder
 
     /**
      * Run the database seeds.
+     *
+     * The courses are keyed on their major, their grade level and their
+     * order, so correcting a title updates the row instead of adding a
+     * second one. The courses of a major and a grade level that are not in
+     * the list any more are removed.
      */
     public function run(): void
     {
@@ -79,20 +84,31 @@ class MajorCourseSeeder extends Seeder
             }
 
             foreach ($grades as $grade => $courses) {
+                $orders = [];
+
                 foreach ($courses as $index => $course) {
+                    $order = $index + 1;
+                    $orders[] = $order;
+
                     MajorCourse::query()->updateOrCreate(
                         [
                             'major_id' => $major->id,
                             'grade' => $grade,
-                            'title' => $course['title'],
+                            'order' => $order,
                         ],
                         [
+                            'title' => $course['title'],
                             'description' => $course['description'],
                             'weekly_hours' => $course['weekly_hours'],
-                            'order' => $index + 1,
                         ],
                     );
                 }
+
+                MajorCourse::query()
+                    ->where('major_id', $major->id)
+                    ->where('grade', $grade)
+                    ->whereNotIn('order', $orders)
+                    ->delete();
             }
         }
     }

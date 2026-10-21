@@ -21,7 +21,7 @@ class GalleryController extends Controller
             ->get();
 
         $albums = $images
-            ->groupBy(fn (GalleryImage $image): string => $image->album ?? 'عمومی')
+            ->groupBy(fn (GalleryImage $image): string => filled($image->album) ? $image->album : 'عمومی')
             ->map(fn (Collection $items): Collection => $items->values());
 
         return view('pages.gallery', [

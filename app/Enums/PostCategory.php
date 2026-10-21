@@ -24,4 +24,19 @@ enum PostCategory: string
             self::Achievement => 'افتخارآفرینی',
         };
     }
+
+    /**
+     * The tone of the badge that marks the post category.
+     *
+     * @return 'accent'|'brand'|'neutral'|'success'
+     */
+    public function tone(): string
+    {
+        return match ($this) {
+            self::News => 'brand',
+            self::Announcement => 'accent',
+            self::Event => 'neutral',
+            self::Achievement => 'success',
+        };
+    }
 }

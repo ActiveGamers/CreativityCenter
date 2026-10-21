@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\GradeLevel;
+use App\Support\PersianDigits;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -14,6 +15,21 @@ class StoreAdmissionRequest extends FormRequest
     public function authorize(): bool
     {
         return true;
+    }
+
+    /**
+     * Normalise the mobile number before the validation.
+     *
+     * The visitor may type the number with the Persian or the Arabic-Indic
+     * digits; the stored number is always written with Latin digits.
+     */
+    protected function prepareForValidation(): void
+    {
+        if (is_string($this->phone)) {
+            $this->merge([
+                'phone' => PersianDigits::toLatin($this->phone),
+            ]);
+        }
     }
 
     /**
@@ -29,7 +45,7 @@ class StoreAdmissionRequest extends FormRequest
             'phone' => ['required', 'string', 'regex:/^09\d{9}$/'],
             'email' => ['nullable', 'string', 'email', 'max:190'],
             'grade_level' => ['required', 'string', Rule::enum(GradeLevel::class)],
-            'major_id' => ['nullable', 'integer', 'exists:majors,id'],
+            'major_id' => ['nullable', 'integer', Rule::exists('majors', 'id')->where('is_active', true)],
             'note' => ['nullable', 'string', 'max:1000'],
         ];
     }

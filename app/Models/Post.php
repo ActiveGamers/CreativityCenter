@@ -49,4 +49,16 @@ class Post extends Model
                     ->orWhere('published_at', '<=', now());
             });
     }
+
+    /**
+     * Determine whether the post is publicly visible right now.
+     *
+     * It applies the same rule as the `published` scope, so a single post and
+     * the list of the posts always agree on what the public can reach.
+     */
+    public function isPubliclyVisible(): bool
+    {
+        return $this->is_published
+            && ($this->published_at === null || $this->published_at->lessThanOrEqualTo(now()));
+    }
 }

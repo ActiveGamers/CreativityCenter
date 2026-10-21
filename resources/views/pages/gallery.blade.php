@@ -5,6 +5,12 @@
     ]);
 
     $albumNames = $albums->keys()->all();
+
+    /* The notice about the placeholders only makes sense while the gallery
+       still shows the seeded sample images: it disappears on its own as soon
+       as the real photos are published. */
+    $onlyPlaceholders = $images->isNotEmpty()
+        && $images->every(fn ($image): bool => str_starts_with((string) data_get($image, 'path', ''), '/images/gallery/placeholder'));
 @endphp
 
 <x-layouts.app
@@ -56,13 +62,15 @@
                     @endforeach
                 </div>
 
-                <div class="mt-10">
-                    <x-pages.notice
-                        tone="accent"
-                        icon="spark"
-                        title="تصاویر این بخش جای‌نگهدار هستند"
-                        description="عکس‌های واقعی کلاس‌ها، آزمایشگاه رایانه و کارگاه مکاترونیک هنوز از سوی هنرستان دریافت نشده است. تا زمان انتشار عکس‌های اصلی، همین تصاویر نمونه در جای آن‌ها نمایش داده می‌شود." />
-                </div>
+                @if ($onlyPlaceholders)
+                    <div class="mt-10">
+                        <x-pages.notice
+                            tone="accent"
+                            icon="spark"
+                            title="تصاویر این بخش جای‌نگهدار هستند"
+                            description="عکس‌های واقعی کلاس‌ها، آزمایشگاه رایانه و کارگاه مکاترونیک هنوز از سوی هنرستان دریافت نشده است. تا زمان انتشار عکس‌های اصلی، همین تصاویر نمونه در جای آن‌ها نمایش داده می‌شود." />
+                    </div>
+                @endif
             @else
                 <x-empty-state
                     title="هنوز تصویری منتشر نشده است"

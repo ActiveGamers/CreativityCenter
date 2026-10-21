@@ -22,6 +22,7 @@ const TEXT = {
     requestFailed: 'انجام درخواست ممکن نشد. لطفاً چند لحظه بعد دوباره تلاش کنید.',
     invalid: 'اطلاعات وارد‌شده معتبر نیست. لطفاً موارد مشخص‌شده را اصلاح کنید.',
     success: 'درخواست شما با موفقیت ثبت شد.',
+    postProcessFailed: 'درخواست شما ثبت شد، اما نمایش نتیجه کامل نشد. صفحه را تازه‌سازی کنید.',
     field: {
         required: 'این فیلد الزامی است.',
         email: 'نشانی ایمیل وارد‌شده معتبر نیست.',
@@ -115,6 +116,16 @@ export function validateField(field) {
     const rawValue = field.value ?? '';
     const value = toLatinDigits(rawValue).trim();
     const required = field.hasAttribute('required') || field.dataset.required === 'true';
+
+    /* A checkbox carries a value even when it is unchecked, so the value can
+       never tell an empty box from a filled one: only `checked` can. */
+    if (field.type === 'checkbox') {
+        if (required && !field.checked) {
+            return TEXT.field.required;
+        }
+
+        return null;
+    }
 
     if (required && value === '') {
         return TEXT.field.required;
@@ -433,13 +444,30 @@ export function attach(form, options = {}) {
 
         setLoading(form, true);
 
-        try {
-            const result = await request(form);
+        let result;
 
-            await handleResponse(result, form, options);
+        /* Only the request itself may report a connection failure: once the
+           server answered, the request has been accepted and a failure in the
+           success handling must not be dressed up as a network problem. */
+        try {
+            result = await request(form);
         } catch (error) {
             Toast.error(TEXT.network);
             options.onError?.(null, null);
+            setLoading(form, false);
+            hideProgress(form);
+
+            return;
+        }
+
+        try {
+            await handleResponse(result, form, options);
+        } catch (error) {
+            /* The request succeeded; the failure comes from the success
+               handler or from the redirect. The visitor still gets a Persian
+               message — never the connection wording. */
+            console.error('[forms] the success handling failed', error);
+            Toast.error(TEXT.postProcessFailed);
         } finally {
             setLoading(form, false);
             hideProgress(form);
@@ -452,7 +480,18 @@ export function attach(form, options = {}) {
     form.addEventListener('input', (event) => {
         const field = event.target;
 
-        if (field?.name && field.getAttribute('aria-invalid') === 'true') {
+        if (!field?.name) {
+            return;
+        }
+
+        /* A server-rendered error is cleared as well: it carries no
+           `aria-invalid` when the markup was produced without the
+           enhancement, so the visible message is the second signal. */
+        const invalid = field.getAttribute('aria-invalid') === 'true';
+        const slot = errorSlot(form, field.name);
+        const serverError = Boolean(slot && slot.textContent.trim() !== '');
+
+        if (invalid || serverError) {
             setFieldError(form, field.name, null);
         }
     });

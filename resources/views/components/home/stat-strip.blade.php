@@ -39,6 +39,9 @@
     $title = $title ?? 'دستاوردهای هنرستان در یک نگاه';
     $description = $description ?? 'رتبه‌های کشوری بر پایه نتایج سه سال اخیر (۱۴۰۱ تا ۱۴۰۳) ثبت شده‌اند.';
 
+    /* The note under the band is configured once for the whole site. */
+    $note = $note ?? config('school.stats_note');
+
     $isPlinth = $variant === 'plinth';
 @endphp
 

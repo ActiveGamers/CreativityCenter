@@ -60,41 +60,11 @@
 
                 <ul class="grid gap-4 lg:grid-cols-2">
                     @foreach ($items as $item)
-                        @php
-                            $scopeLabel = $resolveScope(data_get($item, 'scope'));
-                            $rankLabel = data_get($item, 'rank_label', '');
-                            $competition = data_get($item, 'competition', '');
-                        @endphp
-
-                        <li class="surface-card flex flex-col gap-4 p-5 transition-shadow duration-300 hover:shadow-[var(--shadow-card-hover)] sm:p-6">
-                            <div class="flex flex-wrap items-center gap-2">
-                                @if (filled($scopeLabel))
-                                    <x-badge tone="brand" icon="chart">{{ $scopeLabel }}</x-badge>
-                                @endif
-
-                                @if (filled($rankLabel))
-                                    <span class="inline-flex items-center gap-1.5 rounded-lg border border-accent-200 bg-accent-50 px-2.5 py-1 text-xs font-semibold text-accent-700 dark:border-accent-500/25 dark:bg-accent-950/60 dark:text-accent-300">
-                                        <x-icon name="trophy" class="size-3.5 shrink-0" />
-                                        <span>{{ $rankLabel }}</span>
-                                    </span>
-                                @endif
-
-                                @if (filled($competition))
-                                    <span class="inline-flex items-center gap-1.5 rounded-lg border border-ink-900/10 px-2.5 py-1 text-xs font-medium text-ink-700 dark:border-white/10 dark:text-ink-100">
-                                        <x-icon name="spark" class="size-3.5 shrink-0 text-accent-500" />
-                                        <span>{{ $competition }}</span>
-                                    </span>
-                                @endif
-                            </div>
-
-                            <h3 class="font-display text-base font-bold leading-8 text-balance-fa text-ink-900 dark:text-white">
-                                {{ data_get($item, 'title') }}
-                            </h3>
-
-                            @if (filled(data_get($item, 'description')))
-                                <p class="text-sm leading-8 text-slate-600 dark:text-ink-200">{{ data_get($item, 'description') }}</p>
-                            @endif
-                        </li>
+                        <x-home.milestone-item
+                            :item="$item"
+                            :scope-label="$resolveScope(data_get($item, 'scope'))"
+                            badge-icon="chart"
+                            item-class="surface-card flex flex-col gap-4 p-5 transition-shadow duration-300 hover:shadow-[var(--shadow-card-hover)] sm:p-6" />
                     @endforeach
                 </ul>
             </section>
@@ -116,41 +86,9 @@
 
                 <ul class="flex flex-col gap-3">
                     @foreach ($items as $item)
-                        @php
-                            $scopeLabel = $resolveScope(data_get($item, 'scope'));
-                            $rankLabel = data_get($item, 'rank_label', '');
-                            $competition = data_get($item, 'competition', '');
-                        @endphp
-
-                        <li class="surface-card flex flex-col gap-3 p-5">
-                            <div class="flex flex-wrap items-center gap-2">
-                                @if (filled($scopeLabel))
-                                    <x-badge tone="brand">{{ $scopeLabel }}</x-badge>
-                                @endif
-
-                                @if (filled($rankLabel))
-                                    <span class="inline-flex items-center gap-1.5 rounded-lg border border-accent-200 bg-accent-50 px-2.5 py-1 text-xs font-semibold text-accent-700 dark:border-accent-500/25 dark:bg-accent-950/60 dark:text-accent-300">
-                                        <x-icon name="trophy" class="size-3.5 shrink-0" />
-                                        <span>{{ $rankLabel }}</span>
-                                    </span>
-                                @endif
-
-                                @if (filled($competition))
-                                    <span class="inline-flex items-center gap-1.5 rounded-lg border border-ink-900/10 px-2.5 py-1 text-xs font-medium text-ink-700 dark:border-white/10 dark:text-ink-100">
-                                        <x-icon name="spark" class="size-3.5 shrink-0 text-accent-500" />
-                                        <span>{{ $competition }}</span>
-                                    </span>
-                                @endif
-                            </div>
-
-                            <h3 class="font-display text-base font-bold leading-8 text-balance-fa text-ink-900 dark:text-white">
-                                {{ data_get($item, 'title') }}
-                            </h3>
-
-                            @if (filled(data_get($item, 'description')))
-                                <p class="text-sm leading-8 text-slate-600 dark:text-ink-200">{{ data_get($item, 'description') }}</p>
-                            @endif
-                        </li>
+                        <x-home.milestone-item
+                            :item="$item"
+                            :scope-label="$resolveScope(data_get($item, 'scope'))" />
                     @endforeach
                 </ul>
             </li>

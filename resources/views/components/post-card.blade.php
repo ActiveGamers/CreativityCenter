@@ -27,15 +27,11 @@
         'achievement' => 'افتخارآفرینی',
     ];
 
-    $tones = [
-        'news' => 'brand',
-        'announcement' => 'accent',
-        'event' => 'neutral',
-        'achievement' => 'success',
-    ];
-
     $categoryValue = null;
     $categoryLabel = '';
+
+    /* The badge tone belongs to the category itself, not to this view. */
+    $tone = $category instanceof \App\Enums\PostCategory ? $category->tone() : 'brand';
 
     if (is_object($category) && method_exists($category, 'label')) {
         $categoryLabel = (string) $category->label();
@@ -47,8 +43,6 @@
         $categoryValue = $category;
         $categoryLabel = $categories[$category] ?? $category;
     }
-
-    $tone = $tones[$categoryValue] ?? 'brand';
 
     $href = filled($slug) && \Illuminate\Support\Facades\Route::has('news.show')
         ? route('news.show', $slug)

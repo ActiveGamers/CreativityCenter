@@ -10,7 +10,7 @@
 
 <x-layouts.app
     title="نشست منقضی شده"
-    description="نشست شما منقضی شده است. صفحه را تازه‌سازی کنید و دوباره تلاش کنید یا با کادر آموزشی تماس بگیرید.">
+    description="نشست شما منقضی شده است. صفحه را تازه‌سازی کنید و دوباره تلاش کنید.">
 
     <section class="dark relative isolate overflow-hidden bg-ink-950 text-white">
         <div class="pointer-events-none absolute inset-0 -z-10 texture-grid" aria-hidden="true"></div>
@@ -39,7 +39,7 @@
                 </p>
 
                 <p class="max-w-2xl text-sm leading-8 text-ink-300/90">
-                    صفحه را یک‌بار تازه‌سازی کنید و دوباره تلاش کنید. اگر باز همین پیام را دیدید، با کادر آموزشی تماس بگیرید.
+                    صفحه را یک‌بار تازه‌سازی کنید و دوباره تلاش کنید.
                 </p>
             </div>
 
@@ -50,10 +50,6 @@
 
                 <x-button :href="route('home')" variant="outline" size="lg" icon="arrow" icon-position="end">
                     صفحهٔ اصلی
-                </x-button>
-
-                <x-button :href="route('contact.index')" variant="outline" size="lg" icon="phone" icon-position="start">
-                    تماس با ما
                 </x-button>
             </div>
         </div>

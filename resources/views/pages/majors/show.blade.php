@@ -11,6 +11,11 @@
         '0' => '۰', '1' => '۱', '2' => '۲', '3' => '۳', '4' => '۴',
         '5' => '۵', '6' => '۶', '7' => '۷', '8' => '۸', '9' => '۹',
     ]);
+
+    /* The announced capacity is only shown when the school has published it. */
+    $seatsValue = filled($major->seats)
+        ? $faDigits($major->seats) . ' نفر'
+        : 'اعلام نشده';
 @endphp
 
 <x-layouts.app
@@ -26,7 +31,7 @@
         ]"
         :stats="[
             ['label' => 'تعداد دروس رشته', 'value' => $faDigits($totalCourses) . ' درس'],
-            ['label' => 'ظرفیت اعلام‌شده', 'value' => $faDigits($major->seats) . ' نفر'],
+            ['label' => 'ظرفیت اعلام‌شده', 'value' => $seatsValue],
         ]" />
 
     {{-- دربارهٔ رشته --}}
@@ -37,15 +42,13 @@
                     kicker="دربارهٔ این رشته"
                     :title="$major->title" />
 
-                <div class="prose-fa mt-6">
-                    @if (filled($major->summary))
-                        <p class="text-lg font-medium leading-9 text-ink-800 dark:text-ink-100">{{ $major->summary }}</p>
-                    @endif
-
-                    @if (filled($major->description))
+                @if (filled($major->description))
+                    {{-- The summary is already told by the hero above: only the
+                         long description is repeated here. --}}
+                    <div class="prose-fa mt-6">
                         <p>{{ $major->description }}</p>
-                    @endif
-                </div>
+                    </div>
+                @endif
 
                 @if (filled($totalHours))
                     <p class="mt-6 inline-flex items-center gap-2 rounded-xl border border-ink-900/10 bg-white px-4 py-3 text-sm text-ink-700 dark:border-white/10 dark:bg-ink-950/40 dark:text-ink-100">
@@ -70,7 +73,13 @@
                         </li>
                         <li class="flex items-start gap-2.5">
                             <x-icon name="check" class="mt-1 size-4 shrink-0 text-brand-600 dark:text-brand-300" />
-                            <span>ظرفیت اعلام‌شدهٔ این رشته {{ $faDigits($major->seats) }} نفر است و ممکن است در هر سال تحصیلی تغییر کند.</span>
+                            <span>
+                                @if (filled($major->seats))
+                                    ظرفیت اعلام‌شدهٔ این رشته {{ $seatsValue }} است و ممکن است در هر سال تحصیلی تغییر کند.
+                                @else
+                                    ظرفیت اعلام‌شدهٔ این رشته هنوز اعلام نشده است؛ برای وضعیت دقیق با کادر آموزشی تماس بگیرید.
+                                @endif
+                            </span>
                         </li>
                         <li class="flex items-start gap-2.5">
                             <x-icon name="check" class="mt-1 size-4 shrink-0 text-brand-600 dark:text-brand-300" />

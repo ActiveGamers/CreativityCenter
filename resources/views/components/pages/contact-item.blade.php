@@ -7,7 +7,11 @@
 ])
 
 @php
-    $content = $slot->isNotEmpty() ? trim($slot) : (string) $value;
+    /* The slot carries ready-made markup: it must not be escaped a second
+       time. The plain value stays a normal string and is escaped as usual. */
+    $content = $slot->isNotEmpty()
+        ? new \Illuminate\Support\HtmlString(trim($slot))
+        : (string) $value;
 @endphp
 
 <div {{ $attributes->merge(['class' => 'flex items-start gap-3.5']) }}>

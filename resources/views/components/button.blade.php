@@ -5,7 +5,6 @@
     'type' => 'button',
     'icon' => null,
     'iconPosition' => 'end',
-    'loading' => false,
 ])
 
 @php
@@ -30,7 +29,7 @@
 @endphp
 
 @if (filled($href))
-    <a href="{{ $href }}" @if ($loading) aria-busy="true" @endif
+    <a href="{{ $href }}"
        {{ $attributes->merge(['class' => $classes]) }}>
         <span data-submit-spinner class="hidden size-4 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true"></span>
 
@@ -45,7 +44,7 @@
         @endif
     </a>
 @else
-    <button type="{{ $type }}" @if ($loading) disabled aria-busy="true" @endif
+    <button type="{{ $type }}"
             {{ $attributes->merge(['class' => $classes]) }}>
         <span data-submit-spinner class="hidden size-4 shrink-0 animate-spin rounded-full border-2 border-current border-t-transparent" aria-hidden="true"></span>
 

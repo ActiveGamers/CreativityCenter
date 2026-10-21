@@ -4,10 +4,31 @@
         '5' => '۵', '6' => '۶', '7' => '۷', '8' => '۸', '9' => '۹',
     ]);
 
-    $categories = $posts->getCollection()
-        ->map(fn ($post) => $post->category->label())
-        ->unique()
+    /* The controller delivers every category of the archive as enum cases;
+       the categories of the current page are only the fallback for the
+       pages that do not have the full list. */
+    $categoryFilters = collect($categories ?? [])
+        ->map(fn ($category): array => [
+            'value' => $category instanceof \BackedEnum ? (string) $category->value : (string) $category,
+            'label' => is_object($category) && method_exists($category, 'label')
+                ? (string) $category->label()
+                : (string) $category,
+        ])
+        ->filter(fn (array $item): bool => filled($item['value']) && filled($item['label']))
+        ->unique(fn (array $item): string => $item['value'])
         ->values();
+
+    if ($categoryFilters->isEmpty()) {
+        $categoryFilters = $posts->getCollection()
+            ->map(fn ($post) => $post->category)
+            ->filter()
+            ->unique(fn ($category): string => $category->value)
+            ->map(fn ($category): array => [
+                'value' => (string) $category->value,
+                'label' => (string) $category->label(),
+            ])
+            ->values();
+    }
 
     $nextPage = $posts->currentPage() + 1;
 @endphp
@@ -26,24 +47,26 @@
         ]"
         :facts="[
             ['label' => 'مطلب منتشرشده', 'value' => $faDigits($posts->total()) . ' مطلب'],
-            ['label' => 'دسته‌بندی‌ها', 'value' => $faDigits($categories->count()) . ' دسته'],
+            ['label' => 'دسته‌بندی‌ها', 'value' => $faDigits($categoryFilters->count()) . ' دسته'],
         ]" />
 
     <section class="section-y">
         <div class="container-page">
-            @if ($categories->isNotEmpty())
+            @if ($categoryFilters->isNotEmpty())
                 {{-- Category filter. It is a pure client-side enhancement: with
-                     JavaScript disabled every article stays visible. --}}
-                <div class="flex flex-wrap items-center gap-2" role="group" aria-label="فیلتر دسته‌بندی اخبار">
+                     JavaScript disabled every article stays visible. The
+                     container stays hidden until news.js takes it over, so a
+                     visitor without JavaScript never meets a dead control. --}}
+                <div hidden class="flex flex-wrap items-center gap-2" role="group" aria-label="فیلتر دسته‌بندی اخبار">
                     <button type="button" data-news-filter="all" data-active="true" aria-pressed="true"
                             class="rounded-lg border border-ink-900/12 bg-white px-4 py-2 text-sm font-medium text-ink-700 transition-colors hover:border-brand-500 hover:text-brand-600 data-[active=true]:border-ink-900 data-[active=true]:bg-ink-900 data-[active=true]:text-white dark:border-white/12 dark:bg-white/5 dark:text-ink-100 dark:hover:text-brand-300 dark:data-[active=true]:border-white dark:data-[active=true]:bg-white dark:data-[active=true]:text-ink-950">
                         همهٔ مطالب
                     </button>
 
-                    @foreach ($categories as $category)
-                        <button type="button" data-news-filter="{{ $category }}" data-active="false" aria-pressed="false"
+                    @foreach ($categoryFilters as $category)
+                        <button type="button" data-news-filter="{{ $category['value'] }}" data-news-filter-label="{{ $category['label'] }}" data-active="false" aria-pressed="false"
                                 class="rounded-lg border border-ink-900/12 bg-white px-4 py-2 text-sm font-medium text-ink-700 transition-colors hover:border-brand-500 hover:text-brand-600 data-[active=true]:border-ink-900 data-[active=true]:bg-ink-900 data-[active=true]:text-white dark:border-white/12 dark:bg-white/5 dark:text-ink-100 dark:hover:text-brand-300 dark:data-[active=true]:border-white dark:data-[active=true]:bg-white dark:data-[active=true]:text-ink-950">
-                            {{ $category }}
+                            {{ $category['label'] }}
                         </button>
                     @endforeach
                 </div>

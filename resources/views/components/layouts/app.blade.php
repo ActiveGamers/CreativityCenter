@@ -6,7 +6,13 @@
     $metaDescription = filled($description)
         ? $description
         : (config('school.description') ?? 'معرفی رشته‌ها، برنامه‌های آموزشی، دستاوردها و اخبار هنرستان فنی پسرانه جوار شرکت پالایش نفت بندرعباس.');
-    $ogImage = config('school.og_image') ?: asset('images/og-image.jpg');
+
+    /* The social preview image is only announced when the file really is
+       there: a link preview without an image is better than one that points
+       at a missing file. */
+    $ogImageFile = config('school.og_image') ?: 'images/og-image.jpg';
+    $hasOgImage = filled($ogImageFile) && file_exists(public_path($ogImageFile));
+    $ogImage = $hasOgImage ? asset($ogImageFile) : null;
 @endphp
 
 <!DOCTYPE html>
@@ -29,14 +35,18 @@
     <meta property="og:locale" content="fa_IR">
     <meta property="og:title" content="{{ $pageTitle }}">
     <meta property="og:description" content="{{ $metaDescription }}">
-    <meta property="og:image" content="{{ $ogImage }}">
+    @if (filled($ogImage))
+        <meta property="og:image" content="{{ $ogImage }}">
+    @endif
     <meta property="og:url" content="{{ url()->current() }}">
 
     {{-- Twitter --}}
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ $pageTitle }}">
     <meta name="twitter:description" content="{{ $metaDescription }}">
-    <meta name="twitter:image" content="{{ $ogImage }}">
+    @if (filled($ogImage))
+        <meta name="twitter:image" content="{{ $ogImage }}">
+    @endif
 
     {{-- Theme bootstrap: runs before first paint so the palette never flashes.
          Keep it in sync with resources/js/theme.js. --}}

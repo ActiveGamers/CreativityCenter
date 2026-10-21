@@ -118,11 +118,27 @@
     </div>
 </header>
 
+{{-- The fallback for visitors without JavaScript: the off-canvas drawer
+     cannot be opened, so the main links are repeated as a plain navigation.
+     The drawer trigger is hidden by the same rule in app.css. --}}
+<noscript>
+    <nav aria-label="فهرست اصلی" class="border-b border-ink-900/10 bg-ink-50 dark:border-white/10 dark:bg-ink-950">
+        <div class="container-page flex flex-wrap items-center gap-x-6 gap-y-2 py-3 text-sm font-medium text-ink-700 dark:text-ink-100">
+            @foreach ($navItems as $item)
+                <a href="{{ $item['href'] }}" @if ($item['active']) aria-current="page" @endif
+                   class="transition-colors hover:text-brand-600 dark:hover:text-brand-300">{{ $item['label'] }}</a>
+            @endforeach
+        </div>
+    </nav>
+</noscript>
+
 {{-- Mobile drawer --}}
 <div data-drawer-backdrop class="fixed inset-0 z-[60] hidden bg-ink-950/60 opacity-0 transition-opacity duration-300"
      aria-hidden="true"></div>
 
-<aside id="mobile-nav" data-drawer aria-label="فهرست موبایل" aria-hidden="true"
+{{-- The drawer is closed by default: `inert` keeps its links out of the tab
+     order until the drawer is opened. --}}
+<aside id="mobile-nav" data-drawer aria-label="فهرست موبایل" aria-hidden="true" inert
        class="fixed inset-y-0 end-0 z-[70] flex w-[86%] max-w-sm flex-col border-s border-ink-900/10 bg-white shadow-[var(--shadow-pop)] lg:hidden dark:border-white/10 dark:bg-ink-950">
     <div class="flex h-16 shrink-0 items-center justify-between border-b border-ink-900/10 px-5 dark:border-white/10">
         <span class="font-display text-sm font-bold text-ink-900 dark:text-white">{{ $shortName }}</span>

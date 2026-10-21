@@ -58,7 +58,13 @@ function container() {
  */
 export function show(message, options = {}) {
     const type = ['success', 'error', 'info'].includes(options.type) ? options.type : 'info';
-    const timeout = Number.isFinite(options.timeout) ? options.timeout : DEFAULT_TIMEOUT;
+
+    /* A failure message carries an instruction the visitor may not have
+       finished reading: it stays until it is dismissed. The other toasts
+       disappear on their own. */
+    const timeout = Number.isFinite(options.timeout)
+        ? options.timeout
+        : (type === 'error' ? 0 : DEFAULT_TIMEOUT);
 
     const host = container();
 
@@ -96,17 +102,50 @@ export function show(message, options = {}) {
 
     host.appendChild(toast);
 
-    const dismiss = () => remove(toast);
+    /* The countdown pauses while the toast is hovered or focused: a visitor
+       who is reading the message never loses it halfway. */
+    let timer = null;
+
+    const stopTimer = () => {
+        if (timer === null) {
+            return;
+        }
+
+        window.clearTimeout(timer);
+        timer = null;
+    };
+
+    const dismiss = () => {
+        stopTimer();
+        remove(toast);
+    };
+
+    const startTimer = () => {
+        if (timeout <= 0 || timer !== null) {
+            return;
+        }
+
+        timer = window.setTimeout(() => {
+            timer = null;
+            dismiss();
+        }, timeout);
+    };
 
     toast.querySelector('[data-toast-dismiss]')?.addEventListener('click', dismiss);
 
-    if (timeout > 0) {
-        window.setTimeout(dismiss, timeout);
-    }
+    toast.addEventListener('mouseenter', stopTimer);
+    toast.addEventListener('mouseleave', startTimer);
+    toast.addEventListener('focusin', stopTimer);
+    toast.addEventListener('focusout', (event) => {
+        if (!toast.contains(event.relatedTarget)) {
+            startTimer();
+        }
+    });
+
+    startTimer();
 
     return toast;
 }
-
 /** Fade a toast out and remove it from the DOM. */
 function remove(toast) {
     if (!toast.isConnected || toast.dataset.leaving === 'true') {

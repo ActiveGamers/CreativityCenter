@@ -25,6 +25,78 @@ function collectItems(root) {
     });
 }
 
+/** The focusable elements of the overlay, in visual order. */
+const FOCUSABLE = 'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])';
+
+/**
+ * Make the page behind the overlay inert while the lightbox is open, so the
+ * keyboard can never leave the dialog. The state is restored on close.
+ *
+ * @param {HTMLElement} overlay
+ * @param {boolean} inert
+ */
+function setBackgroundInert(overlay, inert) {
+    Array.from(document.body.children).forEach((element) => {
+        if (element === overlay || !element.matches('header, main, footer')) {
+            return;
+        }
+
+        if (inert) {
+            if (!element.hasAttribute('inert')) {
+                element.setAttribute('inert', '');
+                element.dataset.lightboxInert = 'true';
+            }
+
+            return;
+        }
+
+        if (element.dataset.lightboxInert === 'true') {
+            element.removeAttribute('inert');
+            delete element.dataset.lightboxInert;
+        }
+    });
+}
+
+/**
+ * Keep the Tab key inside the overlay: the focus cycles through the close,
+ * previous and next buttons instead of leaving the lightbox.
+ *
+ * @param {KeyboardEvent} event
+ * @param {HTMLElement} overlay
+ */
+function trapFocus(event, overlay) {
+    if (event.key !== 'Tab') {
+        return;
+    }
+
+    const focusable = Array.from(overlay.querySelectorAll(FOCUSABLE)).filter(
+        (element) => !element.closest('[hidden]') && element.getAttribute('aria-hidden') !== 'true',
+    );
+
+    if (!focusable.length) {
+        return;
+    }
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement;
+
+    if (!overlay.contains(active)) {
+        event.preventDefault();
+        (event.shiftKey ? last : first).focus();
+
+        return;
+    }
+
+    if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+    } else if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+    }
+}
+
 /** Build the lightbox overlay once. */
 function createOverlay() {
     const overlay = document.createElement('div');
@@ -90,33 +162,58 @@ export function initGallery(root = document) {
         let index = 0;
         let lastFocused = null;
 
+        /* Only the items the current filter leaves visible take part in the
+           sequence: the arrows and the counter must not walk over the images
+           the visitor has filtered out. */
+        const visibleItems = () => items.filter((item) => {
+            const wrapper = item.trigger.closest('[data-filter-item]');
+
+            return !wrapper || !wrapper.hidden;
+        });
+
         const render = () => {
-            const item = items[index];
+            const visible = visibleItems();
+            const item = visible[index] ?? visible[0];
+
+            if (!item) {
+                return;
+            }
 
             image.src = item.source;
             image.alt = item.caption;
             caption.textContent = item.caption;
             caption.classList.toggle('hidden', !item.caption);
-            counter.textContent = `${index + 1} / ${items.length}`;
+            counter.textContent = `${visible.indexOf(item) + 1} / ${visible.length}`;
         };
 
         const open = (position) => {
-            index = position;
+            const visible = visibleItems();
+            const target = items[position];
+
+            index = Math.max(0, visible.indexOf(target));
             lastFocused = document.activeElement;
             render();
             overlay.classList.remove('hidden');
             document.body.style.overflow = 'hidden';
+            setBackgroundInert(overlay, true);
             overlay.querySelector('[data-lightbox-close]')?.focus();
         };
 
         const close = () => {
             overlay.classList.add('hidden');
             document.body.style.overflow = '';
+            setBackgroundInert(overlay, false);
             lastFocused?.focus?.();
         };
 
         const step = (direction) => {
-            index = (index + direction + items.length) % items.length;
+            const visible = visibleItems();
+
+            if (!visible.length) {
+                return;
+            }
+
+            index = (index + direction + visible.length) % visible.length;
             render();
         };
 
@@ -143,6 +240,8 @@ export function initGallery(root = document) {
                 step(1);
             } else if (event.key === 'ArrowRight') {
                 step(-1);
+            } else {
+                trapFocus(event, overlay);
             }
         });
     }

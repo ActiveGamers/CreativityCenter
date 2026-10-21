@@ -44,23 +44,35 @@ function createFilter(root) {
 
     const items = () => Array.from(root.querySelectorAll('[data-news-item]'));
 
+    /* The button carries the machine value of the category; its Persian label
+       is kept next to it, because the cards are marked with the label. */
+    const labelOf = (button) => button?.dataset.newsFilterLabel || button?.textContent?.trim() || '';
+
     const apply = (value) => {
         active = value || 'all';
 
+        const button = buttons.find((candidate) => candidate.dataset.newsFilter === active);
+        const label = labelOf(button);
+
         items().forEach((item) => {
-            item.hidden = active !== 'all' && item.dataset.category !== active;
+            const category = item.dataset.category ?? '';
+            const visible =
+                active === 'all' || category === active || (label !== '' && category === label);
+
+            item.hidden = !visible;
         });
 
-        buttons.forEach((button) => {
-            const isActive = button.dataset.newsFilter === active;
+        buttons.forEach((candidate) => {
+            const isActive = candidate.dataset.newsFilter === active;
 
-            button.dataset.active = isActive ? 'true' : 'false';
-            button.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+            candidate.dataset.active = isActive ? 'true' : 'false';
+            candidate.setAttribute('aria-pressed', isActive ? 'true' : 'false');
         });
     };
 
     const sync = () => {
         const known = new Set(buttons.map((button) => button.dataset.newsFilter));
+        const knownLabels = new Set(buttons.map((button) => labelOf(button)));
         const template = buttons[0];
         const container = template.parentElement;
 
@@ -71,16 +83,18 @@ function createFilter(root) {
         items().forEach((item) => {
             const category = item.dataset.category;
 
-            if (!category || known.has(category)) {
+            if (!category || known.has(category) || knownLabels.has(category)) {
                 return;
             }
 
             known.add(category);
+            knownLabels.add(category);
 
             const button = document.createElement('button');
 
             button.type = 'button';
             button.dataset.newsFilter = category;
+            button.dataset.newsFilterLabel = category;
             button.dataset.active = 'false';
             button.setAttribute('aria-pressed', 'false');
             button.className = template.className;
@@ -97,6 +111,11 @@ function createFilter(root) {
     });
 
     apply('all');
+
+    /* The filter is a pure client-side enhancement: without JavaScript the
+       buttons would do nothing, so the container stays hidden until the
+       filter is live. */
+    buttons[0]?.parentElement?.removeAttribute('hidden');
 
     return {
         apply,
@@ -172,7 +191,10 @@ function initLoadMore(root, context) {
             url.searchParams.set('page', String(nextPage));
 
             let response;
+            let html = '';
 
+            /* The body is read inside the same guard: a connection that drops
+               while the page is streaming must not fail silently. */
             try {
                 response = await fetch(url.toString(), {
                     method: 'GET',
@@ -182,6 +204,10 @@ function initLoadMore(root, context) {
                     },
                     credentials: 'same-origin',
                 });
+
+                if (response.ok) {
+                    html = await response.text();
+                }
             } catch (error) {
                 Toast.error(TEXT.network);
                 showPagination(true);
@@ -193,8 +219,6 @@ function initLoadMore(root, context) {
                 showPagination(true);
                 return;
             }
-
-            const html = await response.text();
 
             /* The marker of the previous page is dropped before the new
                markup arrives, so only the marker of the fresh page is read. */

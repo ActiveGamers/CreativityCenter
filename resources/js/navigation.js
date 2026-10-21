@@ -30,8 +30,11 @@ function unlockScroll() {
     document.body.style.paddingInlineEnd = '';
 }
 
+/** The trigger that opened the drawer; the focus goes back to it on close. */
+let drawerOpener = null;
+
 /** Open the mobile drawer. */
-function openDrawer(drawer, backdrop) {
+function openDrawer(drawer, backdrop, opener = null) {
     if (!drawer || drawer.dataset.open === 'true') {
         return;
     }
@@ -39,6 +42,12 @@ function openDrawer(drawer, backdrop) {
     drawer.dataset.open = 'true';
     drawer.setAttribute('aria-hidden', 'false');
     drawer.removeAttribute('inert');
+
+    /* The trigger lives in the header, outside the drawer: it is kept aside
+       so the focus can return to it when the drawer closes. */
+    if (opener) {
+        drawerOpener = opener;
+    }
 
     document.querySelectorAll('[data-drawer-open]').forEach((trigger) => {
         trigger.setAttribute('aria-expanded', 'true');
@@ -51,6 +60,24 @@ function openDrawer(drawer, backdrop) {
 
     lockScroll();
     drawer.querySelector('[data-drawer-close]')?.focus();
+}
+
+/** Give the keyboard back to the trigger that opened the drawer. */
+function restoreFocus() {
+    const opener = drawerOpener ?? document.querySelector('[data-drawer-open]');
+
+    drawerOpener = null;
+
+    /* The trigger is hidden on wide screens: there is nothing to focus then. */
+    if (!opener || opener.hidden || opener.closest('[hidden]')) {
+        return;
+    }
+
+    if (window.getComputedStyle(opener).display === 'none') {
+        return;
+    }
+
+    opener.focus();
 }
 
 /** Close the mobile drawer. */
@@ -73,6 +100,7 @@ function closeDrawer(drawer, backdrop) {
     }
 
     unlockScroll();
+    restoreFocus();
 }
 
 /** Trap Tab inside the drawer while it is open. */
@@ -123,7 +151,7 @@ function initDrawer() {
 
         if (opener) {
             event.preventDefault();
-            openDrawer(drawer, backdrop);
+            openDrawer(drawer, backdrop, opener);
             return;
         }
 
@@ -144,7 +172,6 @@ function initDrawer() {
 
         if (event.key === 'Escape') {
             closeDrawer(drawer, backdrop);
-            drawer.querySelector('[data-drawer-open]')?.focus();
             return;
         }
 

@@ -17,17 +17,21 @@
 
 <figure data-filter-item data-category="{{ $album }}"
         {{ $attributes->merge(['class' => 'group relative overflow-hidden rounded-xl border border-ink-900/10 bg-ink-100 transition-shadow duration-300 hover:shadow-[var(--shadow-card-hover)] dark:border-white/10 dark:bg-ink-900']) }}>
-    <button type="button" data-lightbox data-caption="{{ filled($caption) ? $caption : $alt }}"
-            class="block w-full cursor-zoom-in text-start" aria-label="نمایش بزرگ تصویر {{ $alt }}">
-        @if (filled($src))
+    @if (filled($src))
+        {{-- Only a real image opens the lightbox: a placeholder has nothing
+             to show and must not become a trigger. --}}
+        <button type="button" data-lightbox data-caption="{{ filled($caption) ? $caption : $alt }}"
+                class="block w-full cursor-zoom-in text-start" aria-label="نمایش بزرگ تصویر {{ $alt }}">
             <img src="{{ $src }}" alt="{{ $alt }}" loading="lazy" decoding="async"
                  class="aspect-[4/3] w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]">
-        @else
+        </button>
+    @else
+        <div class="block w-full">
             <span class="grid aspect-[4/3] w-full place-items-center bg-ink-100 text-ink-400 dark:bg-ink-900 dark:text-ink-500">
                 <x-icon name="chart" class="size-8" />
             </span>
-        @endif
-    </button>
+        </div>
+    @endif
 
     <figcaption class="pointer-events-none absolute inset-x-0 bottom-0 flex flex-col gap-1 bg-linear-to-t from-ink-950/92 via-ink-950/65 to-transparent p-4 pt-12 text-white">
         @if (filled($title))

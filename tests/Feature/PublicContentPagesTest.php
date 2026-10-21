@@ -152,7 +152,10 @@ test('the news page renders the list, the category filter and the pagination fal
     $response->assertSee('اخبار و اطلاعیه‌ها');
     $response->assertSee('گزارش آزمایشی فهرست اخبار');
     $response->assertSee('اطلاعیه');
-    $response->assertSee('data-news-filter="اطلاعیه"', false);
+    /* The filter button carries the machine value of the category; its
+       Persian label is the text of the button. */
+    $response->assertSee('data-news-filter="announcement"', false);
+    $response->assertSee('data-news-filter-label="اطلاعیه"', false);
     $response->assertSee('data-news-list', false);
     $response->assertSee('data-news-more', false);
     $response->assertSee('data-news-pagination', false);

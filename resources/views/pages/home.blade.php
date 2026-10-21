@@ -62,7 +62,7 @@
         <div class="container-page">
             <x-section-heading
                 kicker="رشته‌های تحصیلی"
-                title="دو رشته، دو مسیر حرفه‌ای"
+                title="رشته‌های تخصصی، مسیرهای حرفه‌ای"
                 description="رشته‌های تخصصی هنرستان را ببینید؛ برنامه درسی هر پایه در صفحه آموزش آمده است."
                 data-reveal
             >

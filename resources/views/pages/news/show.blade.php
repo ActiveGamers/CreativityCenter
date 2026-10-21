@@ -1,14 +1,8 @@
 @php
     $categoryLabel = $post->category->label();
 
-    $categoryTones = [
-        'news' => 'brand',
-        'announcement' => 'accent',
-        'event' => 'neutral',
-        'achievement' => 'success',
-    ];
-
-    $tone = $categoryTones[$post->category->value] ?? 'brand';
+    /* The badge tone belongs to the category itself, not to this view. */
+    $tone = $post->category->tone();
 
     $paragraphs = collect(preg_split('/\R{2,}/', (string) $post->body))
         ->map(fn (string $paragraph): string => trim($paragraph))

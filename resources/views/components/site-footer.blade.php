@@ -37,6 +37,7 @@
         if (class_exists(\App\Models\Major::class) && \Illuminate\Support\Facades\Route::has('majors.show')) {
             $majorLinks = \Illuminate\Support\Facades\Cache::remember('footer.major_links', 3600, function () {
                 return \App\Models\Major::query()
+                    ->active()
                     ->select(['id', 'title', 'slug'])
                     ->orderBy('id')
                     ->limit(6)
@@ -52,9 +53,13 @@
         $majorLinks = [];
     }
 
-    $mapUrl = filled($address)
-        ? 'https://www.google.com/maps/search/?api=1&query=' . urlencode($address)
-        : 'https://www.google.com/maps';
+    /* The published map link of the school wins; the address search is only
+       the fallback for the case that no link has been published yet. */
+    $mapUrl = filled($school['map_url'] ?? '')
+        ? $school['map_url']
+        : (filled($address)
+            ? 'https://www.google.com/maps/search/?api=1&query=' . urlencode($address)
+            : 'https://www.google.com/maps');
 @endphp
 
 <footer class="mt-auto border-t border-ink-900/10 bg-ink-950 text-ink-100 dark:border-white/10">

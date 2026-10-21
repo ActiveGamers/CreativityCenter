@@ -17,6 +17,15 @@
         ['label' => 'مدیریت', 'value' => $managerName, 'extra' => $managerPhone, 'icon' => 'user'],
         ['label' => 'معاونت', 'value' => $deputyName, 'extra' => $deputyPhone, 'icon' => 'user'],
     ];
+
+    /* The founding year only appears once the school has published it. */
+    $foundedYear = $school['founded_year'] ?? '';
+
+    if (filled($foundedYear)) {
+        array_splice($rows, 2, 0, [
+            ['label' => 'سال تأسیس', 'value' => (string) $foundedYear, 'icon' => 'calendar'],
+        ]);
+    }
 @endphp
 
 <div {{ $attributes->merge(['class' => 'surface-card overflow-hidden']) }}>

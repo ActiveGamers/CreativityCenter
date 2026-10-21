@@ -19,7 +19,7 @@
         <div class="container-page">
             <x-section-heading
                 kicker="رشته‌های فعال"
-                title="دو رشته، دو مسیر حرفه‌ای"
+                title="رشته‌های تخصصی، مسیرهای حرفه‌ای"
                 description="هر رشته با دروس عملی، کارگاه تخصصی و پروژهٔ پایانی همراه است. برای دیدن سرفصل‌ها و ساعات هفتگی، وارد صفحهٔ همان رشته شوید.">
                 <x-slot:action>
                     <x-button :href="route('education')" variant="outline" size="sm" icon="chart" icon-position="end">

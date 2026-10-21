@@ -5,7 +5,10 @@
     <x-home.hero />
 
     {{-- ۲ · Trust strip -------------------------------------------------- --}}
-    <x-home.stat-strip :statistics="$statistics" />
+    <x-home.stat-strip
+        :statistics="$statistics"
+        :exclude="['رشته‌های فعال', 'پایه‌های تحصیلی']"
+    />
 
     {{-- ۳ · معرفی کوتاه -------------------------------------------------- --}}
     <section class="section-y">
@@ -30,19 +33,14 @@
                         </p>
 
                         <p class="text-base leading-9">
-                            دانش‌آموزان در این هنرستان در دو رشته «شبکه و نرم‌افزار رایانه» و «مکاترونیک» و در سه پایه دهم، یازدهم و دوازدهم آموزش می‌بینند؛ مسیری سه‌ساله که از مبانی تخصصی آغاز می‌شود و به پروژه‌های عملی و آمادگی برای دانشگاه و بازار کار می‌رسد.
+                            دانش‌آموزان در این هنرستان مسیری پیوسته را از مبانی تخصصی تا پروژه‌های عملی و آمادگی برای دانشگاه و بازار کار طی می‌کنند؛ آموزشی که در کلاس آغاز می‌شود و در کارگاه ادامه پیدا می‌کند.
                         </p>
                     </div>
 
-                    <dl class="mt-9 grid gap-x-8 gap-y-4 border-t border-ink-900/10 pt-7 sm:grid-cols-3 dark:border-white/10" data-reveal style="--reveal-delay: 140ms">
+                    <dl class="mt-9 grid gap-x-8 gap-y-4 border-t border-ink-900/10 pt-7 sm:grid-cols-2 dark:border-white/10" data-reveal style="--reveal-delay: 140ms">
                         <div>
-                            <dt class="text-xs text-slate-500 dark:text-ink-300">رشته‌های فعال</dt>
-                            <dd class="mt-1.5 font-display text-base font-bold text-ink-900 dark:text-white">۲ رشته تخصصی</dd>
-                        </div>
-
-                        <div>
-                            <dt class="text-xs text-slate-500 dark:text-ink-300">پایه‌های تحصیلی</dt>
-                            <dd class="mt-1.5 font-display text-base font-bold text-ink-900 dark:text-white">دهم تا دوازدهم</dd>
+                            <dt class="text-xs text-slate-500 dark:text-ink-300">سال‌های درخشان</dt>
+                            <dd class="mt-1.5 font-display text-base font-bold text-ink-900 dark:text-white">۱۴۰۱ تا ۱۴۰۳</dd>
                         </div>
 
                         <div>
@@ -65,7 +63,7 @@
             <x-section-heading
                 kicker="رشته‌های تحصیلی"
                 title="دو رشته، دو مسیر حرفه‌ای"
-                description="رشته‌های فعال هنرستان را ببینید؛ برنامه درسی هر پایه در صفحه آموزش آمده است."
+                description="رشته‌های تخصصی هنرستان را ببینید؛ برنامه درسی هر پایه در صفحه آموزش آمده است."
                 data-reveal
             >
                 <x-slot:action>
@@ -91,7 +89,7 @@
             <x-section-heading
                 kicker="مسیر تحصیلی"
                 title="سه پایه، یک مسیر روشن"
-                description="دانش‌آموز از پایه دهم تا دوازدهم در یکی از دو رشته هنرستان ادامه می‌دهد."
+                description="دانش‌آموز از مبانی تخصصی تا پروژه‌های عملی، قدم‌به‌قدم پیش می‌رود."
                 data-reveal
             />
 

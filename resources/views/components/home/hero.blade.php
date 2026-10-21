@@ -23,7 +23,7 @@
     <div class="pointer-events-none absolute -top-44 start-[-18%] -z-10 h-[36rem] w-[85%] hero-wash opacity-90" aria-hidden="true"></div>
     <div class="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-px bg-brand-500/40" aria-hidden="true"></div>
 
-    <div class="container-page grid items-center gap-14 py-16 lg:grid-cols-12 lg:gap-12 lg:py-24">
+    <div class="container-page grid items-center gap-12 py-16 lg:grid-cols-12 lg:gap-12 lg:py-24">
         <div class="lg:col-span-7" data-reveal>
             <p class="inline-flex items-center gap-2 rounded-full border border-white/15 px-3.5 py-1.5 text-xs font-medium text-ink-100">
                 <span class="size-1.5 shrink-0 rounded-full bg-accent-400"></span>
@@ -47,8 +47,13 @@
                 <x-button :href="route('admission.index')" variant="primary" size="lg" class="w-full sm:w-auto">ثبت‌نام پایه دهم</x-button>
                 <x-button :href="route('majors.index')" variant="outline" size="lg" icon="arrow" iconPosition="end" class="w-full sm:w-auto">رشته‌های تحصیلی</x-button>
             </div>
+        </div>
 
-            <dl class="mt-11 grid gap-x-10 gap-y-5 border-t border-white/10 pt-7 sm:grid-cols-2">
+        {{-- The photo slot and the quick facts that caption it. --}}
+        <div class="lg:col-span-5" data-reveal style="--reveal-delay: 140ms">
+            <x-home.hero-visual />
+
+            <dl class="mt-5 grid grid-cols-1 gap-4 border-t border-white/10 pt-5">
                 @if (filled($address))
                     <div class="flex items-start gap-3">
                         <x-icon name="location" class="mt-1 size-4 shrink-0 text-brand-300" />
@@ -73,10 +78,6 @@
                     </div>
                 @endif
             </dl>
-        </div>
-
-        <div class="lg:col-span-5" data-reveal style="--reveal-delay: 140ms">
-            <x-home.hero-visual />
         </div>
     </div>
 </section>

@@ -69,14 +69,41 @@ test('the home page shows the school leadership with a callable phone number', f
     }
 });
 
-test('the home page shows the statistics of the school', function () {
+test('the home page shows the rank statistics of the school', function () {
     $response = $this->get(route('home'));
 
     $response->assertOk();
 
+    $excluded = ['رشته‌های فعال', 'پایه‌های تحصیلی'];
+
     foreach (Statistic::query()->get() as $statistic) {
+        if (in_array($statistic->label, $excluded, true)) {
+            continue;
+        }
+
         $response->assertSee($statistic->label);
         $response->assertSee($statistic->value);
+    }
+});
+
+test('the at a glance band filters the majors and grades statistics out of the view', function () {
+    $response = $this->get(route('home'));
+
+    $response->assertOk();
+    $response->assertDontSee('رشته‌های فعال');
+    $response->assertDontSee('پایه‌های تحصیلی');
+
+    /* The rows themselves stay untouched in the database. */
+    expect(Statistic::query()->where('label', 'رشته‌های فعال')->exists())->toBeTrue();
+    expect(Statistic::query()->where('label', 'پایه‌های تحصیلی')->exists())->toBeTrue();
+});
+
+test('the at a glance band shows the first rank in the national alta competition', function () {
+    foreach (['home', 'about', 'achievements'] as $route) {
+        $response = $this->get(route($route));
+
+        $response->assertOk();
+        $response->assertSee('کسب مقام اول الفتا در کشور');
     }
 });
 
@@ -155,15 +182,40 @@ test('the achievements page explains that the record is cumulative', function ()
     $response->assertSee('تجمعی');
 });
 
-test('the three storytelling pages show the three grade levels of the school', function () {
-    foreach (['home', 'about'] as $route) {
-        $response = $this->get(route($route));
+test('the home page shows the three grade levels in the dedicated section', function () {
+    $response = $this->get(route('home'));
 
-        $response->assertOk();
-        $response->assertSee('دهم');
-        $response->assertSee('یازدهم');
-        $response->assertSee('دوازدهم');
-    }
+    $response->assertOk();
+    $response->assertSee('دهم');
+    $response->assertSee('یازدهم');
+    $response->assertSee('دوازدهم');
+});
+
+test('the about page does not repeat the grade levels', function () {
+    $response = $this->get(route('about'));
+
+    $response->assertOk();
+    $response->assertDontSee('دهم تا دوازدهم');
+    $response->assertDontSee('رشته‌های فعال');
+    $response->assertDontSee('پایه‌های تحصیلی');
+});
+
+test('the home page reserves a landscape photo slot for the school photograph', function () {
+    $response = $this->get(route('home'));
+
+    $response->assertOk();
+    $response->assertSee('محل قرارگیری تصویر');
+    $response->assertSee('public/images/school/technical-view.jpg');
+    $response->assertSee('aspect-[16/9]', false);
+});
+
+test('the footer credits the designers exactly once', function () {
+    $response = $this->get(route('home'));
+
+    $response->assertOk();
+
+    expect(substr_count($response->getContent(), 'طراح و سازندگان'))->toBe(1);
+    $response->assertSee('طراح و سازندگان: سید امین پور سیدی؛ محمد طاها امیدی');
 });
 
 test('the three storytelling pages stay free of the English placeholder copy', function () {

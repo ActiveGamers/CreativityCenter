@@ -8,7 +8,7 @@
     $deputyPhone = $school['deputy_phone'] ?? '';
     $shortName = $school['short_name'] ?? ($school['name'] ?? 'هنرستان فنی');
     $fullName = $school['name'] ?? config('app.name', 'هنرستان فنی');
-    $description = $school['description'] ?? 'هنرستان فنی پسرانه جوار شرکت پالایش نفت بندرعباس؛ مرجع آموزش رشته‌های برق، الکترونیک، مکاترونیک، شبکه و مکانیک.';
+    $description = $school['description'] ?? 'هنرستان فنی پسرانه جوار شرکت پالایش نفت بندرعباس؛ معرفی رشته‌های آموزشی، برنامه درسی، افتخارات کشوری و اخبار هنرستان.';
 
     $resolve = fn (string $name): string => \Illuminate\Support\Facades\Route::has($name)
         ? route($name)
@@ -72,11 +72,6 @@
             </a>
 
             <p class="mt-5 max-w-sm text-sm leading-8 text-ink-200/90">{{ $description }}</p>
-
-            <div class="mt-6 inline-flex items-center gap-2 rounded-lg border border-accent-500/30 bg-accent-500/10 px-3 py-2 text-xs font-medium text-accent-300">
-                <x-icon name="trophy" class="size-4 shrink-0" />
-                <span>رتبه اول کشوری ۱۴۰۳</span>
-            </div>
         </div>
 
         {{-- رشته‌ها --}}
@@ -171,9 +166,9 @@
                 © {{ date('Y') }} — تمامی حقوق برای {{ $fullName }} محفوظ است.
             </p>
 
-            <p class="inline-flex items-center gap-1.5 text-accent-300">
-                <x-icon name="trophy" class="size-4 shrink-0" />
-                <span>رتبه اول کشوری ۱۴۰۳</span>
+            <p class="inline-flex items-center gap-1.5 text-ink-200/90">
+                <x-icon name="spark" class="size-4 shrink-0 text-brand-300" />
+                <span>طراح و سازندگان: سید امین پور سیدی؛ محمد طاها امیدی</span>
             </p>
         </div>
     </div>

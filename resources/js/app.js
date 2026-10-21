@@ -14,6 +14,13 @@ import { initCounters } from './counters.js';
 import { initGallery } from './gallery.js';
 import { initNews } from './news.js';
 
+/*
+ * Note: `./echo` (Laravel Echo + Reverb) is intentionally NOT imported here.
+ * The public website does not broadcast anything, and loading Echo would open a
+ * websocket connection and add the broadcaster bundle to every public page.
+ * Import it once a feature that actually needs realtime updates lands.
+ */
+
 /** Attach AJAX behaviour to the forms that opted in with `data-app-form`. */
 function initForms() {
     document.querySelectorAll('form[data-app-form]').forEach((form) => {

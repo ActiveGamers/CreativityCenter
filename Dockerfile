@@ -71,10 +71,10 @@ RUN ln -sf /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
 # the missing ones are compiled here. The assertion below proves the full list
 # required by the project is available.
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j"$(nproc)" pdo_mysql zip intl gd bcmath pcntl \
+    && docker-php-ext-install -j"$(nproc)" pdo_mysql zip intl gd bcmath pcntl exif \
     && rm -rf /tmp/*
 
-RUN php -r '$required = ["pdo_sqlite", "pdo_mysql", "mbstring", "xml", "curl", "zip", "intl", "gd", "bcmath", "pcntl"]; $loaded = get_loaded_extensions(); foreach ($required as $extension) { if (! in_array($extension, $loaded, true)) { fwrite(STDERR, "missing PHP extension: {$extension}\n"); exit(1); } } if (! in_array("Zend OPcache", $loaded, true)) { fwrite(STDERR, "missing PHP extension: opcache\n"); exit(1); } echo "all required PHP extensions are loaded\n";'
+RUN php -r '$required = ["pdo_sqlite", "pdo_mysql", "mbstring", "xml", "curl", "zip", "intl", "gd", "bcmath", "pcntl", "exif"]; $loaded = get_loaded_extensions(); foreach ($required as $extension) { if (! in_array($extension, $loaded, true)) { fwrite(STDERR, "missing PHP extension: {$extension}\n"); exit(1); } } if (! in_array("Zend OPcache", $loaded, true)) { fwrite(STDERR, "missing PHP extension: opcache\n"); exit(1); } echo "all required PHP extensions are loaded\n";'
 
 # ---------------------------------------------------------------------------
 # Application code
@@ -94,6 +94,12 @@ COPY public/ public/
 COPY database/ database/
 
 # Framework scripts are allowed to run (post-autoload-dump -> package:discover).
+#
+# The build has no .env file, so the broadcaster falls back to the default in
+# config/broadcasting.php (reverb) and Pusher would boot without a key. The
+# image therefore builds with the null broadcaster; the runtime environment
+# (.env / env_file) provides the real BROADCAST_CONNECTION.
+ENV BROADCAST_CONNECTION=null
 RUN composer install --no-interaction --prefer-dist --no-progress
 
 # Node dependencies (package-lock.json is the source of truth).

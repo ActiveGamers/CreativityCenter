@@ -1,0 +1,45 @@
+# Dependencies - installed inside the image (composer install / npm ci)
+node_modules
+vendor
+node_modules/.cache
+
+# Version control
+.git
+.gitignore
+.github
+
+# Local environment / secrets
+.env
+.env.backup
+
+# Laravel runtime artifacts
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/framework/testing/*
+storage/logs/*
+storage/framework/dompdf-fonts/*
+
+# Frontend build output (rebuilt inside the container)
+public/build
+public/hot
+
+# The storage symlink points outside of the build context - it is created by
+# `php artisan storage:link` inside the container at start up.
+public/storage
+
+# Database files
+database/*.sqlite
+database/*.sqlite-journal
+
+# Tests are not needed to build the image
+tests
+
+# Editors / IDE
+.idea
+.vscode
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.log

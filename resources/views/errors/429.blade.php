@@ -59,6 +59,10 @@
                 <x-button :href="route('home')" variant="outline" size="lg" icon="arrow" icon-position="end">
                     صفحهٔ اصلی
                 </x-button>
+
+                <x-button :href="route('contact.index')" variant="secondary" size="lg" icon="arrow" icon-position="end">
+                    تماس با پشتیبانی
+                </x-button>
             </div>
         </div>
     </section>

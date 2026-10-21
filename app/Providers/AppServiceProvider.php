@@ -8,7 +8,6 @@ use Illuminate\Foundation\Exceptions\Handler;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -68,28 +67,11 @@ class AppServiceProvider extends ServiceProvider
                 ], Response::HTTP_TOO_MANY_REQUESTS, $exception->getHeaders());
             }
 
-            return response($this->throttlePage(), Response::HTTP_TOO_MANY_REQUESTS, $exception->getHeaders());
+            return response(
+                view('errors.429', ['throttleMessage' => self::THROTTLE_MESSAGE]),
+                Response::HTTP_TOO_MANY_REQUESTS,
+                $exception->getHeaders(),
+            );
         });
-    }
-
-    /**
-     * The page of a throttled request that does not expect JSON.
-     */
-    protected function throttlePage(): string
-    {
-        return Blade::render(<<<'BLADE'
-            <x-layouts.app title="درخواست بیش از حد" :description="$throttleMessage">
-                <section class="section-y">
-                    <div class="container-page">
-                        <x-empty-state
-                            title="تعداد درخواست‌های شما بیش از حد مجاز است"
-                            :description="$throttleMessage"
-                            icon="spark">
-                            <x-button :href="route('home')" variant="primary" size="sm" icon="arrow">صفحهٔ اصلی</x-button>
-                        </x-empty-state>
-                    </div>
-                </section>
-            </x-layouts.app>
-            BLADE, ['throttleMessage' => self::THROTTLE_MESSAGE]);
     }
 }

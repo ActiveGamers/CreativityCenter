@@ -20,10 +20,11 @@
 #   docker compose down -v                    # stop and delete the named volumes
 #
 # After a rebuild the app container is recreated and receives a new address.
-# nginx resolves the app container once, at start up, so it has to be restarted
-# as well - otherwise nginx keeps the old address and answers with 502:
+# nginx does not cache that address: docker/nginx/default.conf resolves the
+# app container on every request (the Docker resolver with a variable
+# fastcgi_pass), so a restart of nginx is not needed:
 #
-#   docker compose up -d && docker compose restart nginx
+#   docker compose up -d
 #
 # Host port / URL overrides (only needed when 8080 is already taken on the host):
 #   $env:DOCKER_HTTP_PORT = "8081"; $env:DOCKER_APP_URL = "http://localhost:8081"

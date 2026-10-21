@@ -72,7 +72,7 @@ return [
         'numeric' => 'فیلد :attribute باید دست‌کم :value باشد.',
         'string' => 'فیلد :attribute باید دست‌کم :value نویسه باشد.',
     ],
-    'hex_color' => 'فیلد :attribute باید یک کد رنگ شانزده‌شانزدهی معتبر باشد.',
+    'hex_color' => 'فیلد :attribute باید یک کد رنگ هگزادسیمال معتبر باشد.',
     'image' => 'فیلد :attribute باید یک تصویر باشد.',
     'in' => 'مقدار انتخاب‌شده برای :attribute معتبر نیست.',
     'in_array' => 'فیلد :attribute باید در :other وجود داشته باشد.',

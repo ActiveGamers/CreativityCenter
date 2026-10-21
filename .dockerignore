@@ -4,15 +4,26 @@ vendor
 node_modules/.cache
 
 # Version control
+# The .gitignore itself stays in the build context: Tailwind v4 uses it to
+# detect the sources of the CSS build. Without it the image build would scan
+# the vendor folder and produce a different stylesheet than the local build.
 .git
-.gitignore
 .github
 
 # Local environment / secrets
+# Every .env.* variant (.env.production, .env.local, .env.backup, ...) may
+# carry secrets and must never end up in the image. The tracked templates are
+# re-included explicitly - the entrypoint bootstraps a missing .env from
+# .env.example.
 .env
-.env.backup
+.env.*
+!.env.example
+!.env.testing
 
 # Laravel runtime artifacts
+# A locally generated config.php / routes-*.php would be baked into the image
+# and used at runtime (the directory itself stays in the image).
+bootstrap/cache/*.php
 storage/framework/cache/*
 storage/framework/sessions/*
 storage/framework/views/*

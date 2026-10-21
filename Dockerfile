@@ -35,6 +35,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         curl \
         git \
         gnupg \
+        gosu \
         unzip \
         zip \
         libcurl4-openssl-dev \
@@ -97,10 +98,10 @@ COPY database/ database/
 #
 # The build has no .env file, so the broadcaster falls back to the default in
 # config/broadcasting.php (reverb) and Pusher would boot without a key. The
-# image therefore builds with the null broadcaster; the runtime environment
-# (.env / env_file) provides the real BROADCAST_CONNECTION.
-ENV BROADCAST_CONNECTION=null
-RUN composer install --no-interaction --prefer-dist --no-progress
+# variable is therefore scoped to this single build step: an ENV line would
+# survive into the runtime container and override BROADCAST_CONNECTION from
+# the mounted .env / env_file.
+RUN BROADCAST_CONNECTION=null composer install --no-interaction --prefer-dist --no-progress
 
 # Node dependencies (package-lock.json is the source of truth).
 COPY package.json package-lock.json .npmrc ./
@@ -110,10 +111,29 @@ RUN npm ci --no-audit --no-fund
 COPY . .
 
 # ---------------------------------------------------------------------------
+# Frontend build
+# ---------------------------------------------------------------------------
+# The compiled Vite assets are part of the image: a standalone deployment must
+# be able to render the pages without running a build on the host (the image
+# would otherwise reach @vite without public/build/manifest.json).
+#
+# The pristine copy in /opt/app-build survives the bind mount of the working
+# copy in the compose setup - the entrypoint restores it when the mounted
+# public/build is empty.
+RUN npm run build \
+    && test -f public/build/manifest.json \
+    && mkdir -p /opt/app-build \
+    && cp -a public/build/. /opt/app-build/
+
+# ---------------------------------------------------------------------------
 # Runtime directories
 # ---------------------------------------------------------------------------
 # The home directory of www-data (/var/www) must be writable by the non-root
 # user, otherwise npm and composer cannot keep their caches.
+#
+# The container itself starts as root: the entrypoint prepares the (bind
+# mounted) application tree and then drops the privileges to www-data before
+# php-fpm is started.
 RUN mkdir -p \
         storage/app/public \
         storage/framework/cache/data \
@@ -125,7 +145,7 @@ RUN mkdir -p \
         /var/www/.npm \
         /var/www/.composer \
         /var/www/.cache \
-    && chown -R www-data:www-data storage bootstrap/cache vendor node_modules /var/www \
+    && chown -R www-data:www-data storage bootstrap/cache vendor node_modules public/build /var/www \
     && chmod -R ug+rwX storage bootstrap/cache \
     && git config --system --add safe.directory /var/www/html
 
@@ -134,7 +154,8 @@ COPY --chmod=0755 docker/entrypoint.sh /usr/local/bin/entrypoint
 # ---------------------------------------------------------------------------
 # Runtime
 # ---------------------------------------------------------------------------
-USER www-data
+# The entrypoint runs as root (it has to fix the ownership of the mounted
+# application tree) and hands the process over to www-data through gosu.
 WORKDIR ${APP_DIR}
 EXPOSE 9000
 

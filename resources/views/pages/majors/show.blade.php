@@ -26,7 +26,6 @@
         ]"
         :stats="[
             ['label' => 'تعداد دروس رشته', 'value' => $faDigits($totalCourses) . ' درس'],
-            ['label' => 'پایه‌های تحصیلی', 'value' => 'دهم، یازدهم، دوازدهم'],
             ['label' => 'ظرفیت اعلام‌شده', 'value' => $faDigits($major->seats) . ' نفر'],
         ]" />
 
@@ -67,7 +66,7 @@
                     <ul class="flex flex-col gap-3.5 text-sm leading-7 text-slate-600 dark:text-ink-200">
                         <li class="flex items-start gap-2.5">
                             <x-icon name="check" class="mt-1 size-4 shrink-0 text-brand-600 dark:text-brand-300" />
-                            <span>برنامهٔ درسی هر پایه در ادامهٔ همین صفحه، با شرح و ساعات هفتگی آمده است.</span>
+                            <span>دروس هر پایه در ادامهٔ همین صفحه، با شرح و ساعات هفتگی آمده است.</span>
                         </li>
                         <li class="flex items-start gap-2.5">
                             <x-icon name="check" class="mt-1 size-4 shrink-0 text-brand-600 dark:text-brand-300" />
@@ -75,13 +74,13 @@
                         </li>
                         <li class="flex items-start gap-2.5">
                             <x-icon name="check" class="mt-1 size-4 shrink-0 text-brand-600 dark:text-brand-300" />
-                            <span>برای دیدن برنامهٔ درسی هر دو رشته در یک نگاه، صفحهٔ برنامهٔ درسی را ببینید.</span>
+                            <span>برای دیدن دروس هر دو رشته در یک نگاه، صفحهٔ آموزش را ببینید.</span>
                         </li>
                     </ul>
 
                     <div class="flex flex-col gap-3 border-t border-ink-900/8 pt-5 dark:border-white/10">
                         <x-button :href="route('education')" variant="outline" size="sm" icon="chart" icon-position="end">
-                            برنامهٔ درسی کامل
+                            فهرست دروس هنرستان
                         </x-button>
 
                         <x-button :href="route('admission.index')" variant="primary" size="sm" icon="arrow" icon-position="end">
@@ -93,13 +92,13 @@
         </div>
     </section>
 
-    {{-- برنامهٔ درسی --}}
+    {{-- فهرست دروس --}}
     <section class="section-y bg-ink-50/60 dark:bg-ink-950/50">
         <div class="container-page">
             <x-section-heading
-                kicker="برنامهٔ درسی"
+                kicker="فهرست دروس"
                 title="دروس این رشته، پایه به پایه"
-                description="درس‌های هر پایه با عنوان، شرح کوتاه و ساعات هفتگی در جدول زیر آمده است. روی رایانه و تلفن، جدول به کارت‌های خوانا تبدیل می‌شود." />
+                description="هر درس با عنوان، شرح کوتاه و ساعات هفتگی آمده است. روی رایانه و تلفن، جدول به کارت‌های خوانا تبدیل می‌شود." />
 
             <div class="mt-10 flex flex-col gap-12">
                 @foreach ($gradeLabels as $grade)
@@ -137,7 +136,7 @@
             <div class="flex flex-col gap-2">
                 <h2 class="font-display text-lg font-extrabold text-ink-900 dark:text-white">هنوز مطمئن نیستید کدام رشته مناسب شماست؟</h2>
                 <p class="max-w-2xl text-sm leading-8 text-slate-600 dark:text-ink-200">
-                    برنامهٔ درسی رشته‌های هنرستان را در صفحهٔ «برنامهٔ درسی» کنار هم ببینید؛ تفاوت دروس و ساعات هفتگی آنجا روشن می‌شود. برای مشاورهٔ دقیق‌تر هم می‌توانید فرم مشاوره را پر کنید.
+                    دروس رشته‌های هنرستان را در صفحهٔ آموزش کنار هم ببینید؛ تفاوت دروس و ساعات هفتگی آنجا روشن می‌شود. برای مشاورهٔ دقیق‌تر هم می‌توانید فرم مشاوره را پر کنید.
                 </p>
             </div>
 

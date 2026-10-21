@@ -279,6 +279,37 @@ test('the two school facts are announced at most twice per page', function (stri
     'contact' => fn () => route('contact.index'),
 ]);
 
+test('the weekly hours unit is only used as a column header', function (string $url) {
+    $html = $this->get($url)->assertOk()->getContent();
+
+    $tables = substr_count($html, '<table');
+    $unit = substr_count($html, 'ساعت در هفته');
+
+    /* One unit per table — the column header — and nowhere else. */
+    expect($unit)->toBe($tables);
+    expect($unit)->toBeLessThanOrEqual(3);
+})->with([
+    'education' => fn () => route('education'),
+    'major' => fn () => route('majors.show', 'network-and-software'),
+    'other major' => fn () => route('majors.show', 'mechatronics'),
+]);
+
+test('the education courses are grouped by major instead of repeating the name in every row', function () {
+    $html = $this->get(route('education'))->assertOk()->getContent();
+
+    $courseRows = substr_count($html, '<td');
+    $groupHeaders = preg_match_all('/<th[^>]*scope="rowgroup"/u', $html);
+    $majorNames = substr_count($html, 'شبکه و نرم‌افزار رایانه');
+
+    /* Every grade block opens a group per major. */
+    expect($groupHeaders)->toBeGreaterThan(0);
+
+    /* The name of the major is not repeated in the rows: it appears once per
+       group, not once per course. */
+    expect($majorNames)->toBeLessThanOrEqual(6);
+    expect($majorNames)->toBeLessThan($courseRows);
+});
+
 test('the repeated labels are cut from the majors and the education page', function () {
     $majors = $this->get(route('majors.index'))->assertOk()->getContent();
 

@@ -278,21 +278,44 @@ configuration is picked up.
 Before reading code, planning, or editing, run `git branch --show-current`, `git status --short`,
 `git log --oneline -5`, and check pending pushes / open PRs (`git status -sb`,
 `git log origin/dev..HEAD` when online). The branch may have changed since the last session, so
-never assume the previous branch or a clean tree.
+never assume the previous branch or a clean tree. Always `git fetch --prune` first — `dev` moves
+while you work.
 
-### Branching strategy
-- `main`/`master` is protected: no commits, pushes, or direct edits.
-- `dev` is the only working branch. All edits, commits, and pushes happen on `dev`
-  (`git branch --show-current` must print `dev`). Never switch branches without explicit approval.
-- No separate feature branches and no pull requests: changes are made, committed, and pushed
-  directly on `dev`.
+### Branching strategy — one branch per task
+- **NEVER push to `dev`, `main`, or `master`.** Pushing to those three branches is forbidden in
+  every situation, without exception. They are integration/protected branches, not delivery
+  targets.
+- **Every task gets its own branch.** Before starting work, inspect the existing branches —
+  `git branch -a` and `gh branch list` — and look for a branch that already covers the same
+  objective.
+  - If a similar branch exists, **continue the work in that branch** (check it out, keep its
+    commits) instead of creating a duplicate.
+  - If no similar branch exists, create one with a descriptive name:
+    `git checkout -b feat/<short-topic>` (also `fix/`, `docs/`, `chore/`, `refactor/`).
+- `dev` is the integration branch: work arrives there through a pull request, never by pushing.
+- `main`/`master` is protected: no commits, pushes, or direct edits, and it is only updated by
+  merging the reviewed `dev` branch.
+
+### Delivery loop for every task (mandatory)
+1. Commit the finished work on the task branch — descriptive commits, one task per commit.
+2. `git push -u origin <branch>` — the task branch is the only thing that is ever pushed.
+3. **Immediately** open a pull request from the task branch into `dev` with the GitHub CLI:
+   ```sh
+   gh pr create --base dev --head <branch> --title "<type>: <summary>" --body "<description>"
+   ```
+   The PR title follows Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`, `refactor:`),
+   and the body states what changed, why, and how it was verified.
+4. Never leave a PR in a conflicted state: integrate `dev` into the task branch
+   (`git merge origin/dev`, or rebase when the history is still local) and resolve the conflicts
+   yourself before pushing.
+5. One task = one branch = one PR. Do not stack unrelated tasks on the same branch.
 
 ### Commit guidelines
 - Descriptive commit messages describing the exact change; never vague.
 - One task per commit; keep commits small and focused.
-- After finishing any code change, inspect `git status`/`git diff` and commit on `dev` before
-  moving on or ending the turn. Stage only in-scope files; leave unrelated pre-existing
-  modifications and temp/untracked junk uncommitted.
+- After finishing any code change, inspect `git status`/`git diff` and commit on the task branch
+  before pushing. Stage only in-scope files; leave unrelated pre-existing modifications and
+  temp/untracked junk uncommitted.
 
 ### Destructive git safety
 - No irreversible commands without explicit approval: `git checkout -- <path>`, `git restore`,
@@ -301,6 +324,8 @@ never assume the previous branch or a clean tree.
 - Out-of-scope files are off-limits: if a file has uncommitted changes outside the task scope,
   ask first and do not touch it.
 - Ask before any git state change that discards work or alters files outside the task scope.
+- `git push --force` and `git push --force-with-lease` are forbidden even on a task branch;
+  rewrite local history with `git rebase` before the first push instead.
 - Merging is preferred over rebasing while the project has a single developer.
 
 ## 7. Artisan & Console Commands

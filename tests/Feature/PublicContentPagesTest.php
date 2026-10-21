@@ -257,6 +257,45 @@ test('every public page of this lane shows the name of the school', function (st
     'contact' => fn () => route('contact.index'),
 ]);
 
+test('the two school facts are announced at most twice per page', function (string $url) {
+    $html = $this->get($url)->assertOk()->getContent();
+
+    /* The shared header and footer are not part of the page copy. */
+    $content = preg_replace('/<header\b.*?<\/header>/su', '', $html);
+    $content = preg_replace('/<footer\b.*?<\/footer>/su', '', $content);
+
+    $majorsMentions = preg_match_all('/هر دو رشته|دو رشته|۲ رشته|2 رشته|رشته‌های فعال/u', $content);
+    $gradesMentions = preg_match_all('/سه پایه|۳ پایه|پایه‌های تحصیلی|دهم تا دوازدهم/u', $content);
+
+    expect($majorsMentions)->toBeLessThanOrEqual(2);
+    expect($gradesMentions)->toBeLessThanOrEqual(2);
+})->with([
+    'majors' => fn () => route('majors.index'),
+    'major' => fn () => route('majors.show', 'network-and-software'),
+    'education' => fn () => route('education'),
+    'gallery' => fn () => route('gallery'),
+    'news' => fn () => route('news.index'),
+    'admission' => fn () => route('admission.index'),
+    'contact' => fn () => route('contact.index'),
+]);
+
+test('the repeated labels are cut from the majors and the education page', function () {
+    $majors = $this->get(route('majors.index'))->assertOk()->getContent();
+
+    /* The eyebrow repeated the section kicker. */
+    expect($majors)->not->toContain('رشته‌های فعال هنرستان');
+    /* The hero tile repeated the two major cards right below it. */
+    expect($majors)->not->toContain('۲ رشته');
+
+    $education = $this->get(route('education'))->assertOk()->getContent();
+
+    /* The per-grade counters and the table captions repeated the fact. */
+    expect($education)->not->toContain('درس در دو رشته');
+    expect($education)->not->toContain('در دو رشتهٔ هنرستان');
+    expect($education)->not->toContain('۲ رشته');
+    expect($education)->not->toContain('۳ پایه');
+});
+
 test('the contact form shows the flash message when it is submitted without JavaScript', function () {
     $response = $this->followingRedirects()
         ->from(route('contact.index'))

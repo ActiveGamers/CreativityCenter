@@ -277,8 +277,10 @@ configuration is picked up.
 ### ImageMagick is the only image engine
 `config/media-library.php` selects `imagick`, and the `app` image installs ImageMagick with the
 jpeg, png, gif, webp, tiff and heic/avif delegates plus the PECL `imagick` extension, then asserts
-both during the build. **GD is not installed**, so it must never come back as the driver, as a
-fallback or as a new dependency: new image work extends the ImageMagick path instead.
+both during the build. PDF input goes through `ghostscript`, which the image installs and re-enables
+for reading in ImageMagick's coder policy, with `spatie/pdf-to-image` doing the conversion.
+**GD is not installed**, so it must never come back as the driver, as a fallback or as a new
+dependency: new image work extends the ImageMagick path instead.
 
 ## 6. Git Workflow
 

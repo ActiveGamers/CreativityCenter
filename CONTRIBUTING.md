@@ -75,7 +75,14 @@ Feature requests that lack a clear use case may be closed.
 
 ### Requirements
 
-- PHP **8.3+**
+- PHP **8.3+** with the **`imagick`** extension, plus the ImageMagick binaries that extension
+  wraps (`convert`, `identify`). There is no GD fallback: `config/media-library.php` selects
+  `imagick`, and the Docker image installs nothing else.
+  - **Docker**: nothing to do — both the extension and the binaries are part of the `app` image.
+  - **Linux host**: `sudo apt-get install imagemagick libmagickwand-dev` then `sudo pecl install imagick`.
+  - **Windows host**: install ImageMagick (Q16-HDRI, 64-bit) with *Add application directory to your
+    system path*, then enable the `php_imagick.dll` matching your PHP version, thread safety and
+    compiler in `php.ini` (`extension=imagick`).
 - Composer **2.x**
 - Node.js **20.19+** or **22.12+** and npm
 - MySQL **8.x** or PostgreSQL **15+**

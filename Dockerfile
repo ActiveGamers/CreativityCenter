@@ -30,6 +30,16 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # System packages
 # ---------------------------------------------------------------------------
 # Build/runtime libraries for the PHP extensions, plus git/unzip for Composer.
+#
+# `imagemagick` is the runtime half of the only image engine the application
+# uses (see the `image_driver` entry in config/media-library.php): the
+# `convert`/`identify` binaries plus the codec libraries (jpeg, png, gif, webp,
+# tiff, heic/avif, svg). The matching headers for the PECL build of the
+# `imagick` extension are installed and purged again in the extension layer
+# below.
+#
+# There is no `gd` counterpart here: no `libfreetype`, `libjpeg` or `libpng`
+# headers, and no `gd` extension.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates \
         curl \
@@ -38,13 +48,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         gosu \
         unzip \
         zip \
+        imagemagick \
         libcurl4-openssl-dev \
-        libfreetype6-dev \
         libgmp-dev \
         libicu-dev \
-        libjpeg62-turbo-dev \
         libonig-dev \
-        libpng-dev \
         libxml2-dev \
         libzip-dev \
     && rm -rf /var/lib/apt/lists/*
@@ -69,13 +77,28 @@ RUN ln -sf /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
 # PHP extensions
 # ---------------------------------------------------------------------------
 # php:8.4-fpm already ships pdo_sqlite, mbstring, xml, curl and opcache, so only
-# the missing ones are compiled here. The assertion below proves the full list
-# required by the project is available.
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j"$(nproc)" pdo_mysql zip intl gd bcmath pcntl exif \
-    && rm -rf /tmp/*
+# the missing ones are built here. `imagick` is not part of the PHP source tree
+# and therefore comes from PECL; `$PHPIZE_DEPS` is the toolchain that build
+# needs. Both the toolchain and the ImageMagick headers are purged in the same
+# layer, so only the extension itself survives.
+#
+# `gd` is deliberately absent: ImageMagick is the single image engine of the
+# application. The two assertions below fail the build when either half of it is
+# missing - the extension, or the `convert` binary without the delegates the
+# media library converts to.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends $PHPIZE_DEPS libmagickwand-dev \
+    && pecl install imagick-3.8.1 \
+    && docker-php-ext-enable imagick \
+    && docker-php-ext-install -j"$(nproc)" pdo_mysql zip intl bcmath pcntl exif \
+    && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
+        $PHPIZE_DEPS libmagickwand-dev \
+    && rm -rf /var/lib/apt/lists/* /tmp/pear /tmp/*
 
-RUN php -r '$required = ["pdo_sqlite", "pdo_mysql", "mbstring", "xml", "curl", "zip", "intl", "gd", "bcmath", "pcntl", "exif"]; $loaded = get_loaded_extensions(); foreach ($required as $extension) { if (! in_array($extension, $loaded, true)) { fwrite(STDERR, "missing PHP extension: {$extension}\n"); exit(1); } } if (! in_array("Zend OPcache", $loaded, true)) { fwrite(STDERR, "missing PHP extension: opcache\n"); exit(1); } echo "all required PHP extensions are loaded\n";'
+RUN php -r '$required = ["pdo_sqlite", "pdo_mysql", "mbstring", "xml", "curl", "zip", "intl", "imagick", "bcmath", "pcntl", "exif"]; $loaded = get_loaded_extensions(); foreach ($required as $extension) { if (! in_array($extension, $loaded, true)) { fwrite(STDERR, "missing PHP extension: {$extension}\n"); exit(1); } } if (! in_array("Zend OPcache", $loaded, true)) { fwrite(STDERR, "missing PHP extension: opcache\n"); exit(1); } echo "all required PHP extensions are loaded\n";'
+
+RUN convert -version \
+    && php -r 'foreach (["JPEG", "PNG", "GIF", "WEBP", "TIFF", "HEIC", "AVIF"] as $format) { if (Imagick::queryFormats($format) === []) { fwrite(STDERR, "imagick has no {$format} delegate\n"); exit(1); } } echo "imagick delegates are available\n";'
 
 # ---------------------------------------------------------------------------
 # Application code

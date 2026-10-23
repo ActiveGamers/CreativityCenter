@@ -241,8 +241,12 @@ return [
     /*
      * The engine that should perform the image conversions.
      * Should be either `gd`, `imagick` or `vips`.
+     *
+     * The application container only ships (and asserts) the `gd` extension,
+     * so `gd` is the default: selecting `imagick` here without installing it
+     * would make every conversion job fail.
      */
-    'image_driver' => env('IMAGE_DRIVER', 'imagick'),
+    'image_driver' => env('IMAGE_DRIVER', 'gd'),
 
     /*
      * FFMPEG & FFProbe binaries paths, only used if you try to generate video

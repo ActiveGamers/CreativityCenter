@@ -416,7 +416,9 @@ contain parts 1 and 2; add part 3 only when it genuinely matters.
   generic error). Replace blocking `alert()` with a toast. Route all `catch` paths to a Persian
   toast; `console.*` alone is not user feedback.
 - **Error views:** every page under `resources/views/errors/` extends the shared error layout,
-  states what happened + what to do, and links contact support in its action buttons.
+  states what happened + what to do, and links contact support in its action buttons — except the
+  full-page 419 view, which offers «تلاش دوباره» and «صفحهٔ اصلی» only (see the fixed wording
+  above): an expired session is a self-service error, so it must not carry a contact link.
 
 ## 11. Testing
 

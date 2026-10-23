@@ -84,38 +84,57 @@ Feature requests that lack a clear use case may be closed.
 
 ### Local Installation
 
-Fork the repository, clone your fork, add the upstream remote, then:
+Fork the repository, clone your fork, add the upstream remote, then run every command **inside the
+matching container** — the site runs in Docker and `AGENTS.md` §5 requires `artisan`, `composer` and
+`npm` to run there. The host commands are only the fallback for when the containers are not running.
 
-**Step 1 — Install dependencies**
+**Step 1 — Start the containers**
 
-    composer install
-    npm install
+    docker compose up -d
 
-**Step 2 — Prepare the environment**
+**Step 2 — Install dependencies**
+
+    docker compose exec app composer install
+    docker compose exec app npm install
+
+Host fallback (containers unavailable): `composer install` and `npm install`.
+
+**Step 3 — Prepare the environment**
 
     cp .env.example .env
-    php artisan key:generate
+    docker compose exec app php artisan key:generate
 
-**Step 3 — Configure `.env`**
+Host fallback: `php artisan key:generate`.
 
-Set your database and Redis credentials.
+**Step 4 — Configure `.env`**
 
-**Step 4 — Migrate and seed**
+Set your database and Redis credentials. The container reads the same `.env` through the bind mount.
 
-    php artisan migrate --seed
+**Step 5 — Migrate and seed**
 
-**Step 5 — Link storage (required for Spatie Media Library)**
+    docker compose exec app php artisan migrate --seed
 
-    php artisan storage:link
+Host fallback: `php artisan migrate --seed`.
 
-**Step 6 — Build frontend assets**
+**Step 6 — Link storage (required for Spatie Media Library)**
 
-    npm run dev
+    docker compose exec app php artisan storage:link
 
-**Step 7 — Run the services (in separate terminals)**
+Host fallback: `php artisan storage:link`.
 
-    php artisan serve
-    php artisan horizon
+**Step 7 — Build the frontend assets**
+
+    docker compose exec app npm run build
+
+The production build is the required final state: never leave `npm run dev` running as the last
+step of the setup. Start the dev server only while you work on the frontend, then run
+`npm run build` again before you finish.
+
+**Step 8 — Run the services (in separate terminals)**
+
+    docker compose exec app php artisan horizon
+
+Host fallback: `php artisan serve` and `php artisan horizon`.
 
 We recommend running Horizon locally so you can inspect queued jobs during development.
 
@@ -127,14 +146,14 @@ This project uses a **two-branch** model:
 
 | Branch   | Purpose                                              | Rules                                              |
 |----------|------------------------------------------------------|----------------------------------------------------|
-| `master` | Production-ready code only. Deployed to production.  | **Protected.** No direct pushes, no PRs allowed.   |
+| `main`   | Production-ready code only. Deployed to production.  | **Protected.** No direct pushes, no PRs allowed.   |
 | `dev`    | Active development and integration branch.           | **Protected.** PRs only, no direct pushes.         |
 
 ### Important: PRs are only accepted against `dev`
 
-**Every Pull Request must target the `dev` branch.** Any PR opened against `master` will be **closed automatically without review**. This is enforced by the repository's branch protection rules.
+**Every Pull Request must target the `dev` branch.** Any PR opened against `main` will be **closed automatically without review**. This is enforced by the repository's branch protection rules.
 
-The promotion of changes from `dev` to `master` is handled exclusively by the maintainers through the automated release pipeline.
+The promotion of changes from `dev` to `main` is handled exclusively by the maintainers through the automated release pipeline.
 
 ### Workflow
 
@@ -148,7 +167,7 @@ The promotion of changes from `dev` to `master` is handled exclusively by the ma
 
 3. Push to your fork and open a Pull Request **against `dev`**.
 
-4. After review and merge into `dev`, the release process will promote changes to `master` automatically.
+4. After review and merge into `dev`, the release process will promote changes to `main` automatically.
 
 ### Branch Naming
 
@@ -217,12 +236,18 @@ Commits that don't follow this format may be rejected during review.
 
 ## Pull Request Process
 
-1. **Sync with `dev`** before opening the PR:
+1. **Sync with `dev`** before opening the PR — rebase only while your branch is still local:
 
        git fetch upstream
        git rebase upstream/dev
 
-2. **Target the `dev` branch.** PRs against `master` are closed automatically.
+   Once the task branch has been pushed, do **not** rebase it: the rewrite would require a force
+   push, which this project forbids. Merge `dev` into the branch instead:
+
+       git fetch upstream
+       git merge upstream/dev
+
+2. **Target the `dev` branch.** PRs against `main` are closed automatically.
 
 3. **Fill in the PR template** completely:
    - What the change does and why.
@@ -238,7 +263,7 @@ Commits that don't follow this format may be rejected during review.
 
 7. **Respond to review comments.** If you disagree, explain why politely. The goal is a better project, not winning an argument.
 
-8. **Rebase, don't merge `dev` into your branch.** Keep a clean, linear history.
+8. **Rebase only local history; merge `dev` into a pushed branch.** A force push is forbidden, so once the branch is public, bring `dev` in with a merge instead of a rebase.
 
 ### Merge Strategy
 
@@ -324,7 +349,7 @@ Every push and PR runs:
 4. **CodeQL** – security scanning.
 5. **Docker build** – ensures the image builds successfully.
 
-After a merge to `master`, a `semantic-release` job:
+After a merge to `main`, a `semantic-release` job:
 
 - Analyzes Conventional Commits.
 - Bumps the version in `composer.json` / `package.json`.

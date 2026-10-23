@@ -17,6 +17,13 @@ concurrency:
   group: qa-${{ github.ref }}
   cancel-in-progress: true
 
+# The lock file pins its dist archives to a mirror that is not reachable from
+# GitHub runners, so the step below rewrites the URLs and composer downloads
+# from api.github.com instead. That endpoint allows 60 anonymous requests an
+# hour, hence the token.
+env:
+  COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ github.token }}"}}'
+
 jobs:
   tests:
     name: Tests
@@ -44,6 +51,14 @@ jobs:
           path: ${{ steps.composer-cache.outputs.dir }}
           key: composer-${{ runner.os }}-${{ hashFiles('composer.lock') }}
           restore-keys: composer-${{ runner.os }}-
+
+      - name: Point the lock file at GitHub for this run
+        run: |
+          # The committed lock keeps the mirror the maintainers use locally; the
+          # runner cannot reach it, so only this working copy is rewritten.
+          if grep -q 'https://mirror-composer.runflare.com/repos/' composer.lock; then
+            sed -i 's|https://mirror-composer.runflare.com/repos/|https://api.github.com/repos/|g' composer.lock
+          fi
 
       - name: Install the PHP dependencies
         run: composer install --no-interaction --prefer-dist --no-progress

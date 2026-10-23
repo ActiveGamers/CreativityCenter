@@ -269,7 +269,9 @@ Commits that don't follow this format may be rejected during review.
 
 5. **One concern per PR.** Don't mix a refactor with a feature.
 
-6. **Ensure CI passes.** All checks (Pint, PHPStan, tests, CodeQL, Docker build) must be green.
+6. **Ensure CI passes.** The `QA` workflow runs the test suite for every branch and every pull
+   request and must be green. Formatting is not part of CI: run `vendor/bin/pint --dirty` locally
+   before you push.
 
 7. **Respond to review comments.** If you disagree, explain why politely. The goal is a better project, not winning an argument.
 
@@ -351,23 +353,29 @@ Guidelines:
 
 ## CI/CD
 
-Every push and PR runs:
+The repository ships four workflows in `.github/workflows`:
 
-1. **Pint** – code style.
-2. **PHPStan** – static analysis.
-3. **PHPUnit / Pest** – tests, with a minimum coverage threshold.
-4. **CodeQL** – security scanning.
-5. **Docker build** – ensures the image builds successfully.
+| Workflow | Trigger | What it does |
+| --- | --- | --- |
+| `QA` | every push and every pull request | installs the PHP and Node dependencies, builds the frontend assets and runs `php artisan test`. Code style is **not** part of it. |
+| `OSV-Scanner` | PRs into `dev`/`main`, pushes to `main`, weekly | scans the dependencies for known vulnerabilities. |
+| `Auto-assign` | a newly opened issue or pull request | assigns it to the maintainer. |
+| `Docker Release` | manual (`workflow_dispatch`) | builds the application image and publishes it to GHCR. |
 
-After a merge to `main`, a `semantic-release` job:
+Formatting is a local step, not a CI check: run `vendor/bin/pint --dirty` before you push.
 
-- Analyzes Conventional Commits.
-- Bumps the version in `composer.json` / `package.json`.
-- Generates `CHANGELOG.md`.
-- Creates a Git tag (`vX.Y.Z`).
-- Builds and pushes a Docker image tagged with the version and `latest`.
+### Docker releases
 
-Do **not** tag releases manually. Let the pipeline do it.
+Releases are published by hand, never by a merge:
+
+1. Open **Actions → Docker Release → Run workflow**.
+2. Pick the branch and type the version to publish, for example `v1.0.1`.
+3. The run pushes `ghcr.io/<owner>/<repo>:v1.0.1` and moves `latest` onto that same image, so the
+   previous release keeps only its own tag. No commit-SHA tag is produced.
+4. After a successful push the registry is pruned: only the newest **8** versions stay, and the
+   oldest ones are deleted.
+
+Do not create release tags by hand; the workflow owns them.
 
 ---
 

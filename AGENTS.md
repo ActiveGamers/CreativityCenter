@@ -282,6 +282,13 @@ for reading in ImageMagick's coder policy, with `spatie/pdf-to-image` doing the 
 **GD is not installed**, so it must never come back as the driver, as a fallback or as a new
 dependency: new image work extends the ImageMagick path instead.
 
+### Continuous integration and releases
+`.github/workflows` holds four workflows: `QA` (the test suite on every push and pull request — code
+style is not part of it), `OSV-Scanner` (dependency scan), `Auto-assign` (a new issue or pull request
+is assigned to the maintainer) and `Docker Release` (manual only: type a version, the run pushes that
+tag plus `latest` to GHCR and keeps the newest 8 versions). Never create release tags or push images
+by hand.
+
 ## 6. Git Workflow
 
 ### Session-start git check (mandatory, every session)

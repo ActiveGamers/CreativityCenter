@@ -274,6 +274,12 @@ outside Docker. Cached artifacts in Docker are ephemeral and do not reflect file
 After any config or Horizon supervisor change, restart the relevant container so the new
 configuration is picked up.
 
+### ImageMagick is the only image engine
+`config/media-library.php` selects `imagick`, and the `app` image installs ImageMagick with the
+jpeg, png, gif, webp, tiff and heic/avif delegates plus the PECL `imagick` extension, then asserts
+both during the build. **GD is not installed**, so it must never come back as the driver, as a
+fallback or as a new dependency: new image work extends the ImageMagick path instead.
+
 ## 6. Git Workflow
 
 ### Session-start git check (mandatory, every session)

@@ -1,0 +1,187 @@
+# ---------------------------------------------------------------------------
+# Everyday commands (Docker Compose v2+)
+#
+#   docker compose build                      # build the app image
+#   docker compose up -d                      # start app + nginx  -> http://localhost:8080
+#   docker compose ps                         # status of the running services
+#   docker compose logs --tail 30 app nginx   # tail the logs
+#
+#   docker compose exec app php artisan --version
+#   docker compose exec app php artisan migrate --force --no-interaction
+#   docker compose exec app php artisan route:list
+#   docker compose exec app composer install --no-interaction --prefer-dist --no-progress
+#   docker compose exec app npm run build     # production Vite build (public/build)
+#   docker compose exec app npm run dev -- --host 0.0.0.0
+#
+#   docker compose --profile dev up -d node   # optional Vite dev server -> http://localhost:5173
+#   docker compose --profile db  up -d db     # optional MySQL 8      -> 127.0.0.1:3307
+#
+#   docker compose down                       # stop the containers
+#   docker compose down -v                    # stop and delete the named volumes
+#
+# After a rebuild the app container is recreated and receives a new address.
+# nginx does not cache that address: docker/nginx/default.conf resolves the
+# app container on every request (the Docker resolver with a variable
+# fastcgi_pass), so a restart of nginx is not needed:
+#
+#   docker compose up -d
+#
+# Host port / URL overrides (only needed when 8080 is already taken on the host):
+#   $env:DOCKER_HTTP_PORT = "8081"; $env:DOCKER_APP_URL = "http://localhost:8081"
+#   docker compose up -d
+#
+# ---------------------------------------------------------------------------
+# First run on a clean checkout
+#
+# The .env file is not tracked by git. It is therefore optional here: when it
+# is missing the entrypoint copies .env.example to .env and generates the
+# application key, so `docker compose up -d` works on a fresh clone.
+#
+# ---------------------------------------------------------------------------
+# Database
+#
+# The default is SQLite: the file lives in the working copy at
+# database/database.sqlite and the entrypoint creates it when it is missing.
+#
+# To use the optional MySQL 8 container (profile "db"):
+#
+#   $env:DOCKER_DB_CONNECTION = "mysql"
+#   $env:DOCKER_DB_DATABASE   = "naftjavan"
+#   $env:DOCKER_DB_USERNAME   = "naftjavan"
+#   $env:DOCKER_DB_PASSWORD   = "naftjavan"
+#   docker compose --profile db up -d          # starts db + app + nginx
+#   docker compose ps                          # wait until the db reports "healthy"
+#
+# The app and the db service read the same DOCKER_DB_* variables, so the
+# credentials of the two services can never drift apart: changing
+# DOCKER_DB_PASSWORD changes the password of the MySQL container and of the
+# Laravel connection at the same time.
+#
+# The DB_* variables below are driven by the DOCKER_DB_* variables and
+# therefore win over the values of the .env file. The MySQL container is
+# published on the loopback interface only (127.0.0.1:${DOCKER_MYSQL_PORT:-3307}).
+#
+# DOCKER_DB_DATABASE carries the MySQL database name. The SQLite driver reads
+# the very same DB_DATABASE variable as a file path, so the default of the app
+# service stays that path; set DOCKER_DB_DATABASE to the database name when you
+# enable the db profile.
+#
+# ---------------------------------------------------------------------------
+# Migrations
+#
+# AUTO_MIGRATE controls the automatic `php artisan migrate --force` at start
+# up. It defaults to "true" for local development; set AUTO_MIGRATE=false to
+# turn it off. A failing migration is logged and never blocks the start of
+# php-fpm.
+#
+# NOTE (AGENTS.md section 5): never run `php artisan optimize`, `config:cache`,
+# `view:cache`, `route:cache`, `event:cache` or any other optimize/cache command.
+# Only the `clear` variants are allowed.
+# ---------------------------------------------------------------------------
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: naftjavan-app:latest
+    working_dir: /var/www/html
+    env_file:
+      # The .env file is not tracked by git, so it must not abort the start.
+      # The entrypoint creates it from .env.example when it is missing.
+      - path: .env
+        required: false
+    environment:
+      # The host .env keeps APP_URL=http://localhost:8000; the container serves
+      # the site through nginx on port 8080, so it is overridden here only.
+      APP_URL: "${DOCKER_APP_URL:-http://localhost:8080}"
+      # Database wiring. The default stays SQLite (the file inside the working
+      # copy); the optional "db" profile (MySQL 8) is enabled through the
+      # DOCKER_DB_* variables, see the header of this file. The db service
+      # reads the same variables, so the two services always agree.
+      DB_CONNECTION: "${DOCKER_DB_CONNECTION:-sqlite}"
+      DB_HOST: "${DOCKER_DB_HOST:-db}"
+      DB_PORT: "${DOCKER_DB_PORT:-3306}"
+      # A file path for SQLite, the database name for MySQL: the driver reads
+      # one and the same DB_DATABASE variable, hence the path as the default.
+      DB_DATABASE: "${DOCKER_DB_DATABASE:-/var/www/html/database/database.sqlite}"
+      DB_USERNAME: "${DOCKER_DB_USERNAME:-naftjavan}"
+      DB_PASSWORD: "${DOCKER_DB_PASSWORD:-naftjavan}"
+      # Automatic migrations at start up (see the header of this file).
+      AUTO_MIGRATE: "${AUTO_MIGRATE:-true}"
+    volumes:
+      # The working copy is bind mounted, ...
+      - .:/var/www/html
+      # ... while the dependency folders live in named volumes so the container
+      # copies (installed during the image build) are used instead of the host
+      # ones. This keeps Linux binaries and file permissions consistent.
+      - vendor:/var/www/html/vendor
+      - node_modules:/var/www/html/node_modules
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      # 8080 on the host -> 80 in the container. Set DOCKER_HTTP_PORT when the
+      # host port 8080 is already used by another project.
+      - "${DOCKER_HTTP_PORT:-8080}:80"
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      # The repository is mounted read-only so nginx can serve the compiled
+      # assets (public/build), the favicon and the public/storage symlink.
+      - .:/var/www/html:ro
+    depends_on:
+      - app
+    restart: unless-stopped
+
+  node:
+    image: node:22-alpine
+    profiles: ["dev"]
+    working_dir: /var/www/html
+    command: sh -c "npm ci --no-audit --no-fund && npm run dev -- --host 0.0.0.0"
+    volumes:
+      - .:/var/www/html
+      # Own volume: the app image is Debian based (glibc) while this service is
+      # Alpine based (musl). The native Vite/Rolldown/Tailwind binaries differ
+      # per libc, so both services must not share one node_modules folder.
+      - node_modules_vite:/var/www/html/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+
+  db:
+    image: mysql:8
+    profiles: ["db"]
+    environment:
+      # The same DOCKER_DB_* variables the app service reads, so a changed
+      # password, user or database name reaches both containers.
+      MYSQL_DATABASE: "${DOCKER_DB_DATABASE:-naftjavan}"
+      MYSQL_USER: "${DOCKER_DB_USERNAME:-naftjavan}"
+      MYSQL_PASSWORD: "${DOCKER_DB_PASSWORD:-naftjavan}"
+      MYSQL_ROOT_PASSWORD: "${DOCKER_MYSQL_ROOT_PASSWORD:-naftjavan-root}"
+    volumes:
+      - db_data:/var/lib/mysql
+    ports:
+      # Published on the loopback interface only: the database never becomes
+      # reachable from outside the host.
+      - "127.0.0.1:${DOCKER_MYSQL_PORT:-3307}:3306"
+    healthcheck:
+      test:
+        - "CMD"
+        - "mysqladmin"
+        - "ping"
+        - "-h"
+        - "127.0.0.1"
+        - "-p${DOCKER_MYSQL_ROOT_PASSWORD:-naftjavan-root}"
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+volumes:
+  vendor:
+  node_modules:
+  node_modules_vite:
+  db_data:

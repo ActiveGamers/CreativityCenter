@@ -34,15 +34,16 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # `imagemagick` is the runtime half of the only image engine the application
 # uses (see the `image_driver` entry in config/media-library.php): the
 # `convert`/`identify` binaries plus the codec libraries (jpeg, png, gif, webp,
-# tiff, heic/avif, svg). The matching headers for the PECL build of the
-# `imagick` extension are installed and purged again in the extension layer
-# below.
+# tiff, heic/avif, svg). `ghostscript` is the renderer ImageMagick hands PDF
+# input to. The matching headers for the PECL build of the `imagick` extension
+# are installed and purged again in the extension layer below.
 #
 # There is no `gd` counterpart here: no `libfreetype`, `libjpeg` or `libpng`
 # headers, and no `gd` extension.
 RUN apt-get update && apt-get install -y --no-install-recommends \
         ca-certificates \
         curl \
+        ghostscript \
         git \
         gnupg \
         gosu \
@@ -99,6 +100,27 @@ RUN php -r '$required = ["pdo_sqlite", "pdo_mysql", "mbstring", "xml", "curl", "
 
 RUN convert -version \
     && php -r 'foreach (["JPEG", "PNG", "GIF", "WEBP", "TIFF", "HEIC", "AVIF"] as $format) { if (Imagick::queryFormats($format) === []) { fwrite(STDERR, "imagick has no {$format} delegate\n"); exit(1); } } echo "imagick delegates are available\n";'
+
+# ---------------------------------------------------------------------------
+# PDF input (ghostscript + the ImageMagick coder policy)
+# ---------------------------------------------------------------------------
+# Debian ships ghostscript, but its /etc/ImageMagick-6/policy.xml denies the
+# PDF/PS/EPS/XPS coders - the hardening that followed the ghostscript remote
+# code executions. Policy rules are evaluated in order and the last match wins,
+# so appending a `read` rule re-opens PDF *input* only: PostScript, EPS and XPS
+# stay denied, and writing a PDF stays denied too.
+#
+# The assertion converts a PDF generated on the spot, because the media library
+# only thumbnails a PDF when both halves (the binary and the policy) are in
+# place.
+RUN sed -i 's|</policymap>|  <policy domain="coder" rights="read" pattern="PDF" />\n</policymap>|' /etc/ImageMagick-6/policy.xml \
+    && grep -q 'rights="read" pattern="PDF"' /etc/ImageMagick-6/policy.xml \
+    && printf '%s\n' '%!PS-Adobe-3.0' '/Helvetica findfont 12 scalefont setfont 10 10 moveto (pdf probe) show showpage' > /tmp/probe.ps \
+    && gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=/tmp/probe.pdf /tmp/probe.ps \
+    && convert /tmp/probe.pdf /tmp/probe.png \
+    && test -s /tmp/probe.png \
+    && rm -f /tmp/probe.ps /tmp/probe.pdf /tmp/probe.png \
+    && echo "pdf input is available"
 
 # ---------------------------------------------------------------------------
 # Application code

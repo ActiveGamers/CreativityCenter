@@ -61,6 +61,11 @@ jobs:
           fi
 
       - name: Install the PHP dependencies
+        # package:discover boots the application, and without a .env the
+        # broadcaster falls back to reverb, which cannot be built without keys.
+        # The Dockerfile pins the same variable for its composer step.
+        env:
+          BROADCAST_CONNECTION: 'null'
         run: composer install --no-interaction --prefer-dist --no-progress
 
       - name: Set up Node.js

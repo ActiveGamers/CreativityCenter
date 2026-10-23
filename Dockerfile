@@ -146,7 +146,16 @@ COPY database/ database/
 # variable is therefore scoped to this single build step: an ENV line would
 # survive into the runtime container and override BROADCAST_CONNECTION from
 # the mounted .env / env_file.
-RUN BROADCAST_CONNECTION=null composer install --no-interaction --prefer-dist --no-progress
+#
+# Composer fetches the dist archives from api.github.com, which limits anonymous
+# requests to 60 an hour - far below the ~110 packages installed here. The token
+# is mounted as a build secret so it never lands in an image layer, and a build
+# without the secret still works because COMPOSER_AUTH then falls back to an
+# empty credential set.
+RUN --mount=type=secret,id=composer_auth \
+    BROADCAST_CONNECTION=null \
+    COMPOSER_AUTH="$(cat /run/secrets/composer_auth 2>/dev/null || echo '{}')" \
+    composer install --no-interaction --prefer-dist --no-progress
 
 # Node dependencies (package-lock.json is the source of truth).
 COPY package.json package-lock.json .npmrc ./

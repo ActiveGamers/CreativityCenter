@@ -161,9 +161,11 @@ This project uses a **two-branch** model:
 
 ### Important: PRs are only accepted against `dev`
 
-**Every Pull Request must target the `dev` branch.** Any PR opened against `main` will be **closed automatically without review**. This is enforced by the repository's branch protection rules.
+**Every Pull Request must target the `dev` branch.** A pull request opened against `main` is closed
+without review: `main` only ever receives the promotion pull request of a release.
 
-The promotion of changes from `dev` to `main` is handled exclusively by the maintainers through the automated release pipeline.
+The promotion of changes from `dev` to `main` is handled exclusively by the maintainers, by hand,
+when a release is due.
 
 ### Workflow
 
@@ -198,7 +200,10 @@ Example: `feat/media-library-thumbnails`
 
 ## Commit Conventions
 
-This project uses **[Conventional Commits](https://www.conventionalcommits.org/)** because automated releases and changelog generation rely on them (via `semantic-release`).
+This project uses **[Conventional Commits](https://www.conventionalcommits.org/)** so that the history
+says what each change does and how large it is. Nothing derives the version from it automatically:
+`Docker Release` is dispatched by hand with the version to publish, and the table below is the
+convention for choosing that version.
 
 ### Format
 
@@ -210,7 +215,7 @@ This project uses **[Conventional Commits](https://www.conventionalcommits.org/)
 
 ### Allowed types
 
-| Type       | Meaning                                            | Triggers release |
+| Type       | Meaning                                            | Suggested bump   |
 |------------|----------------------------------------------------|------------------|
 | `feat`     | New feature                                        | Minor            |
 | `fix`      | Bug fix                                            | Patch            |
@@ -226,7 +231,7 @@ This project uses **[Conventional Commits](https://www.conventionalcommits.org/)
 
 ### Breaking changes
 
-Any commit that breaks backward compatibility **must** include `BREAKING CHANGE:` in the footer (or `!` after the type). This triggers a **major** version bump.
+Any commit that breaks backward compatibility **must** include `BREAKING CHANGE:` in the footer (or `!` after the type). By the convention above it is a **major** bump.
 
 Example:
 
@@ -258,7 +263,7 @@ Commits that don't follow this format may be rejected during review.
        git fetch upstream
        git merge upstream/dev
 
-2. **Target the `dev` branch.** PRs against `main` are closed automatically.
+2. **Target the `dev` branch.** PRs against `main` are closed without review.
 
 3. **Fill in the PR template** completely:
    - What the change does and why.
@@ -280,7 +285,9 @@ Commits that don't follow this format may be rejected during review.
 
 ### Merge Strategy
 
-Only **Merge** and **Rebase** are allowed. **Squash merges are disabled.** This preserves the individual commits that `semantic-release` uses to compute versions and changelogs.
+Only **Merge** and **Rebase** are allowed. **Squash merges are disabled.** The individual commits are
+the record of what a change did, and a squashed branch would leave one commit for work that was
+reviewed in several steps.
 
 ---
 

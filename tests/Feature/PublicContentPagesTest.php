@@ -373,10 +373,11 @@ test('the error views explain the situation and link to the contact page', funct
     /* An expired session is a self-service error: the page body itself offers
        no contact link. The shared chrome — header, fallback navigation, drawer
        and footer — is not page copy and always carries that link, so only the
-       section the error page renders is inspected. */
-    preg_match('/<section\b.*?<\/section>/su', $expired, $expiredBody);
+       section the error page renders is inspected. The match itself is asserted
+       first: an empty match would make the negative assertion pass vacuously. */
+    expect(preg_match('/<section\b.*?<\/section>/su', $expired, $expiredBody))->toBe(1);
 
-    expect($expiredBody[0] ?? '')->not->toContain(route('contact.index'));
+    expect($expiredBody[0])->not->toContain(route('contact.index'));
 
     /* There is no login on this public website, so the 419 view must not
        offer a "sign in again" action. */

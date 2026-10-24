@@ -177,7 +177,8 @@ The promotion of changes from `dev` to `main` is handled exclusively by the main
 
 3. Push to your fork and open a Pull Request **against `dev`**.
 
-4. After review and merge into `dev`, the release process will promote changes to `main` automatically.
+4. After review and merge into `dev`, the maintainers promote `dev` to `main` with a pull request when
+   a release is due. Nothing is promoted automatically.
 
 ### Branch Naming
 

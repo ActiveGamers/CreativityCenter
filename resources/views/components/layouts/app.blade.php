@@ -52,10 +52,26 @@
          Keep it in sync with resources/js/theme.js. --}}
     <script>
         (function () {
-            try {
-                var root = document.documentElement;
+            var root = document.documentElement;
 
-                root.classList.add('js');
+            root.classList.add('js');
+
+            /* The `js` class hides the CSS-only fallback navigation and assumes
+               the bundle will take over. A blocked, failed or never-evaluated
+               bundle never sets `app-ready`, so the class is dropped again: the
+               fallback navigation comes back instead of leaving the visitor
+               without any mobile navigation.
+
+               The timer is armed before the theme setup below, because blocked
+               storage throws out of that block - and a visitor whose storage is
+               blocked is exactly the one who must not be left without a menu. */
+            window.setTimeout(function () {
+                if (!root.classList.contains('app-ready')) {
+                    root.classList.remove('js');
+                }
+            }, 3000);
+
+            try {
                 var stored = window.localStorage.getItem('theme');
                 var theme = (stored === 'light' || stored === 'dark')
                     ? stored
@@ -63,17 +79,6 @@
                 root.classList.toggle('dark', theme === 'dark');
                 root.style.colorScheme = theme;
                 root.dataset.theme = theme;
-
-                /* The `js` class hides the CSS-only fallback navigation and
-                   assumes the bundle will take over. A blocked, failed or
-                   never-evaluated bundle never sets `app-ready`, so the class
-                   is dropped again: the fallback navigation comes back instead
-                   of leaving the visitor without any mobile navigation. */
-                window.setTimeout(function () {
-                    if (!root.classList.contains('app-ready')) {
-                        root.classList.remove('js');
-                    }
-                }, 3000);
             } catch (error) {
                 /* storage blocked — fall back to the light palette */
             }

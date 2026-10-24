@@ -52,10 +52,15 @@
 #   docker compose --profile db up -d          # starts db + app + nginx
 #   docker compose ps                          # wait until the db reports "healthy"
 #
-# The app and the db service read the same DOCKER_DB_* variables, so the
-# credentials of the two services can never drift apart: changing
-# DOCKER_DB_PASSWORD changes the password of the MySQL container and of the
-# Laravel connection at the same time.
+# The app and the db service read the same DOCKER_DB_* variables, so on a first
+# start the two services can never drift apart: MySQL creates its user with
+# DOCKER_DB_PASSWORD and the Laravel connection uses the same value.
+#
+# Rotating the password of a database that already exists is a two-step job:
+# MySQL applies MYSQL_PASSWORD only while the data volume is empty. Change the
+# password inside MySQL first (ALTER USER ... IDENTIFIED BY ...), then set
+# DOCKER_DB_PASSWORD and recreate the app container. Changing only the variable
+# locks the application out of its database.
 #
 # The DB_* variables below are driven by the DOCKER_DB_* variables and
 # therefore win over the values of the .env file. The MySQL container is

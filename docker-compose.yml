@@ -2,9 +2,10 @@
 # Everyday commands (Docker Compose v2+)
 #
 #   docker compose build                      # build the app image
-#   docker compose up -d                      # start app + nginx  -> http://localhost:8080
+#   docker compose up -d                      # start app + nginx + redis + horizon + scheduler
 #   docker compose ps                         # status of the running services
 #   docker compose logs --tail 30 app nginx   # tail the logs
+#   docker compose logs --tail 30 horizon     # tail the Horizon worker logs
 #
 #   docker compose exec app php artisan --version
 #   docker compose exec app php artisan migrate --force --no-interaction
@@ -83,6 +84,30 @@
 # `view:cache`, `route:cache`, `event:cache` or any other optimize/cache command.
 # Only the `clear` variants are allowed.
 # ---------------------------------------------------------------------------
+# Queues, Redis and Horizon
+#
+# The queue connection is redis (QUEUE_CONNECTION), and Horizon needs Redis to
+# supervise the workers: the `redis` service is therefore required and is not
+# behind a profile. The `horizon` service runs the master supervisor
+# (`php artisan horizon`) that processes the queued jobs (the media
+# conversions, ...), and the `scheduler` service runs the schedule that feeds
+# the Horizon metrics (`horizon:snapshot` every five minutes).
+#
+# The dashboard lives at http://localhost:8080/horizon: open to everybody in
+# the local environment, and restricted to the HORIZON_ALLOWED_EMAILS
+# allowlist everywhere else (see app/Providers/HorizonServiceProvider.php).
+#
+# The app, horizon and scheduler services override REDIS_HOST with the `redis`
+# service name; the value of the bind-mounted .env file (127.0.0.1) only fits
+# the host fallback.
+#
+# After a code change the workers keep running the old code until they are
+# told to terminate - the process monitor restarts them with the new code:
+#
+#   docker compose exec app php artisan horizon:terminate
+#
+# `docker compose restart horizon` restarts them as well.
+# ---------------------------------------------------------------------------
 
 services:
   app:
@@ -112,6 +137,12 @@ services:
       DB_DATABASE: "${DOCKER_DB_DATABASE:-/var/www/html/database/database.sqlite}"
       DB_USERNAME: "${DOCKER_DB_USERNAME:-naftjavan}"
       DB_PASSWORD: "${DOCKER_DB_PASSWORD:-naftjavan}"
+      # Queue and Redis wiring (see the "Queues, Redis and Horizon" section
+      # above): Horizon supervises the workers and needs the Redis queue
+      # connection. The values win over the bind-mounted .env file, whose
+      # 127.0.0.1 only fits the host fallback.
+      QUEUE_CONNECTION: "${DOCKER_QUEUE_CONNECTION:-redis}"
+      REDIS_HOST: "${DOCKER_REDIS_HOST:-redis}"
       # Automatic migrations at start up (see the header of this file).
       AUTO_MIGRATE: "${AUTO_MIGRATE:-true}"
     volumes:
@@ -123,6 +154,11 @@ services:
       - vendor:/var/www/html/vendor
       - node_modules:/var/www/html/node_modules
     restart: unless-stopped
+    depends_on:
+      # The queue connection is redis: a request that dispatches a job (a
+      # media conversion, ...) needs Redis to be reachable.
+      redis:
+        condition: service_healthy
 
   nginx:
     image: nginx:alpine
@@ -138,6 +174,77 @@ services:
     depends_on:
       - app
     restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    # Required, not a profile: Horizon and the queue connection need it.
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - redis_data:/data
+    ports:
+      # Published on the loopback interface only: the host fallback talks to
+      # it, nothing outside the host ever reaches it.
+      - "127.0.0.1:${DOCKER_REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 5s
+    restart: unless-stopped
+
+  horizon:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: naftjavan-app:latest
+    working_dir: /var/www/html
+    # The Horizon master supervisor: it starts and watches the queue workers
+    # and is the process `horizon:terminate` restarts after a code change.
+    command: php artisan horizon
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      APP_URL: "${DOCKER_APP_URL:-http://localhost:8080}"
+      QUEUE_CONNECTION: "${DOCKER_QUEUE_CONNECTION:-redis}"
+      REDIS_HOST: "${DOCKER_REDIS_HOST:-redis}"
+      # The app service owns the migrations; a second one here would only
+      # race it on the same database.
+      AUTO_MIGRATE: "false"
+    volumes:
+      - .:/var/www/html
+      # The image's Linux binaries, not the host ones (same reason as app).
+      - vendor:/var/www/html/vendor
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: naftjavan-app:latest
+    working_dir: /var/www/html
+    # Runs the schedule of routes/console.php every minute, which is what
+    # takes the Horizon metrics snapshots (horizon:snapshot).
+    command: php artisan schedule:work
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      APP_URL: "${DOCKER_APP_URL:-http://localhost:8080}"
+      QUEUE_CONNECTION: "${DOCKER_QUEUE_CONNECTION:-redis}"
+      REDIS_HOST: "${DOCKER_REDIS_HOST:-redis}"
+      AUTO_MIGRATE: "false"
+    volumes:
+      - .:/var/www/html
+      - vendor:/var/www/html/vendor
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
 
   node:
     image: node:22-alpine
@@ -190,3 +297,4 @@ volumes:
   node_modules:
   node_modules_vite:
   db_data:
+  redis_data:

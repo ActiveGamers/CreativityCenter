@@ -87,16 +87,22 @@ RUN ln -sf /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
 # application. The two assertions below fail the build when either half of it is
 # missing - the extension, or the `convert` binary without the delegates the
 # media library converts to.
+#
+# Two extensions back the queue infrastructure: `pcntl` gives the Horizon
+# master supervisor its signal handling and worker control, and `redis` is the
+# phpredis driver the queue, cache and Horizon connections use
+# (REDIS_CLIENT=phpredis in .env.example). `posix` ships with PHP itself.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends $PHPIZE_DEPS libmagickwand-dev \
     && pecl install imagick-3.8.1 \
-    && docker-php-ext-enable imagick \
+    && pecl install redis-6.3.0 \
+    && docker-php-ext-enable imagick redis \
     && docker-php-ext-install -j"$(nproc)" pdo_mysql zip intl bcmath pcntl exif \
     && apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
         $PHPIZE_DEPS libmagickwand-dev \
     && rm -rf /var/lib/apt/lists/* /tmp/pear /tmp/*
 
-RUN php -r '$required = ["pdo_sqlite", "pdo_mysql", "mbstring", "xml", "curl", "zip", "intl", "imagick", "bcmath", "pcntl", "exif"]; $loaded = get_loaded_extensions(); foreach ($required as $extension) { if (! in_array($extension, $loaded, true)) { fwrite(STDERR, "missing PHP extension: {$extension}\n"); exit(1); } } if (! in_array("Zend OPcache", $loaded, true)) { fwrite(STDERR, "missing PHP extension: opcache\n"); exit(1); } echo "all required PHP extensions are loaded\n";'
+RUN php -r '$required = ["pdo_sqlite", "pdo_mysql", "mbstring", "xml", "curl", "zip", "intl", "imagick", "bcmath", "pcntl", "exif", "redis"]; $loaded = get_loaded_extensions(); foreach ($required as $extension) { if (! in_array($extension, $loaded, true)) { fwrite(STDERR, "missing PHP extension: {$extension}\n"); exit(1); } } if (! in_array("Zend OPcache", $loaded, true)) { fwrite(STDERR, "missing PHP extension: opcache\n"); exit(1); } echo "all required PHP extensions are loaded\n";'
 
 RUN convert -version \
     && php -r 'foreach (["JPEG", "PNG", "GIF", "WEBP", "TIFF", "HEIC", "AVIF"] as $format) { if (Imagick::queryFormats($format) === []) { fwrite(STDERR, "imagick has no {$format} delegate\n"); exit(1); } } echo "imagick delegates are available\n";'

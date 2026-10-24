@@ -58,15 +58,17 @@
 
             /* The `js` class hides the CSS-only fallback navigation and assumes
                the bundle will take over. A blocked, failed or never-evaluated
-               bundle never sets `app-ready`, so the class is dropped again: the
+               bundle never sets `nav-ready`, so the class is dropped again: the
                fallback navigation comes back instead of leaving the visitor
-               without any mobile navigation.
+               without any mobile navigation. The navigation module sets the
+               marker itself, so a drawer that fails to initialise is covered
+               as well.
 
                The timer is armed before the theme setup below, because blocked
                storage throws out of that block - and a visitor whose storage is
                blocked is exactly the one who must not be left without a menu. */
             window.setTimeout(function () {
-                if (!root.classList.contains('app-ready')) {
+                if (!root.classList.contains('nav-ready')) {
                     root.classList.remove('js');
                 }
             }, 3000);

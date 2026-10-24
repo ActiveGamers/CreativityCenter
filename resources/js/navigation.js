@@ -245,6 +245,14 @@ function initActiveLinks() {
 
 export function initNavigation() {
     initDrawer();
+
+    /* The drawer is wired: only from here on may the CSS hide the CSS-only
+       fallback navigation and show the drawer trigger. The marker lives here
+       and not in app.js, because app.js wraps this call in a try/catch — a
+       bundle that boots but whose drawer initialiser throws must keep the
+       fallback instead of leaving a trigger that opens nothing. */
+    document.documentElement.classList.add('nav-ready');
+
     initHeaderElevation();
     initActiveLinks();
 }

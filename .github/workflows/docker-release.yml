@@ -8,7 +8,7 @@
 #
 # Only the newest `KEEP_VERSIONS` releases stay in the registry; the older ones
 # are removed after a successful push, together with the untagged attestation
-# manifests that are older than `KEEP_UNTAGGED_DAYS`.
+# manifests of the releases that go away.
 
 name: Docker Release
 
@@ -128,9 +128,14 @@ jobs:
           #
           #   * the releases beyond the newest $KEEP, newest first - only the
           #     versions that carry a `vX.Y.Z` tag take part in that count;
-          #   * the untagged versions older than $KEEP_UNTAGGED_DAYS. Provenance
-          #     and SBOM attestations are pushed as untagged manifests, so
-          #     without this group the registry grows with every release.
+          #   * the untagged versions that are older than the age floor *and*
+          #     older than the oldest release that is kept. Provenance and SBOM
+          #     attestations are untagged manifests created by the very push
+          #     that publishes a release, so they are never older than the
+          #     release they belong to: an untagged version that is older
+          #     belongs to a release this run removes, and deleting anything
+          #     younger would strip a kept image of its attestations. Without
+          #     this group the registry grows with every release.
           if [ "$OWNER_TYPE" = "Organization" ]; then
             api="orgs/${GITHUB_REPOSITORY_OWNER}/packages/container/${PACKAGE}/versions"
           else
@@ -141,19 +146,38 @@ jobs:
 
           ids=$(gh api --paginate "$api" --jq '.[]' | jq -rs --argjson keep "$KEEP" --arg cutoff "$cutoff" '
             (map(select([.metadata.container.tags[]? | select(test("^v[0-9]+\\.[0-9]+\\.[0-9]+$"))] | length > 0))
-              | sort_by(.created_at) | reverse | .[$keep:])
-            + (map(select((.metadata.container.tags // []) | length == 0))
-              | map(select(.created_at < $cutoff)))
+              | sort_by(.created_at) | reverse) as $releases
+            | ($releases[:$keep] | map(.created_at) | min) as $oldest_kept
+            | ($releases[$keep:])
+              + (map(select((.metadata.container.tags // []) | length == 0))
+                | map(select(.created_at < $cutoff
+                  and ($oldest_kept == null or .created_at < $oldest_kept))))
             | map(.id) | unique | join(",")')
 
+          echo "api=$api" >> "$GITHUB_OUTPUT"
           echo "ids=$ids" >> "$GITHUB_OUTPUT"
           echo "versions to delete: ${ids:-none}"
 
       - name: Delete the versions beyond the retention window
         if: steps.prune.outputs.ids != ''
-        uses: actions/delete-package-versions@v5
-        with:
-          token: ${{ secrets.PACKAGES_TOKEN || github.token }}
-          package-version-ids: ${{ steps.prune.outputs.ids }}
-          package-name: ${{ steps.names.outputs.package }}
-          package-type: container
+        env:
+          # Same token as the listing above: see the note there.
+          GH_TOKEN: ${{ secrets.PACKAGES_TOKEN || github.token }}
+          API: ${{ steps.prune.outputs.api }}
+          IDS: ${{ steps.prune.outputs.ids }}
+        run: |
+          # One request per version instead of actions/delete-package-versions:
+          # that action silently slices `package-version-ids` to its first 100
+          # entries, so a run can report success while older versions stay.
+          failed=0
+
+          for id in ${IDS//,/ }; do
+            if gh api --method DELETE "$API/$id" > /dev/null; then
+              echo "deleted version $id"
+            else
+              echo "::error::could not delete version $id"
+              failed=1
+            fi
+          done
+
+          exit "$failed"

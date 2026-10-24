@@ -7,7 +7,10 @@
 name: QA
 
 on:
+  # A pull request opened from this repository also fires `push`, so the branch
+  # filter keeps the suite from running twice for the same change.
   push:
+    branches: [dev, main]
   pull_request:
 
 permissions:

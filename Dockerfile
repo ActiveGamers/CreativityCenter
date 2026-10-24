@@ -30,6 +30,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
 # System packages
 # ---------------------------------------------------------------------------
 # Build/runtime libraries for the PHP extensions, plus git/unzip for Composer.
+# `util-linux` provides `flock`, which the entrypoint uses to serialize the
+# .env bootstrap across the app, horizon and scheduler containers.
 #
 # `imagemagick` is the runtime half of the only image engine the application
 # uses (see the `image_driver` entry in config/media-library.php): the
@@ -48,6 +50,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         gnupg \
         gosu \
         unzip \
+        util-linux \
         zip \
         imagemagick \
         libcurl4-openssl-dev \

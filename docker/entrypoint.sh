@@ -83,6 +83,16 @@ is_truthy() {
 # ---------------------------------------------------------------------------
 # The .env file is not tracked by git. On a clean checkout it does not exist,
 # so it is created from the template and the application key is generated.
+#
+# The app, horizon and scheduler containers run this script at the same time
+# and share the bind-mounted .env file. The lock serializes the copy and the
+# key generation: without it one container could copy .env.example over the
+# .env file in which another container has just written APP_KEY, and a
+# container that booted before the key existed would encrypt with an empty
+# key.
+exec 9>"${APP_DIR}/.env.lock"
+flock -x 9
+
 if [ ! -f .env ]; then
     if [ -f .env.example ]; then
         log "no .env file found - creating one from .env.example"
@@ -102,6 +112,9 @@ if [ -f .env ] && ! grep -qE '^APP_KEY=.+' .env; then
         warn "key:generate failed - set APP_KEY in the .env file manually"
     fi
 fi
+
+flock -u 9
+exec 9>&-
 
 # ---------------------------------------------------------------------------
 # 2) Runtime directories

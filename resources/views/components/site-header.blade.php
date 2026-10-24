@@ -121,7 +121,7 @@
 {{-- The fallback navigation: the off-canvas drawer cannot be opened
      without JavaScript, so the main links live in the markup as a plain,
      always usable navigation. It is a real element — the CSS hides it as
-     soon as the app is ready (see `html.app-ready [data-fallback-nav]` in
+     soon as the drawer is wired (see `html.nav-ready [data-fallback-nav]` in
      app.css), so the fallback and the drawer are never visible together. --}}
 <nav data-fallback-nav aria-label="فهرست اصلی (بدون جاوااسکریپت)"
      class="border-b border-ink-900/10 bg-ink-50 dark:border-white/10 dark:bg-ink-950">

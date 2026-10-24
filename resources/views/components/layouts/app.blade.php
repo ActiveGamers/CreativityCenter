@@ -52,15 +52,35 @@
          Keep it in sync with resources/js/theme.js. --}}
     <script>
         (function () {
+            var root = document.documentElement;
+
+            root.classList.add('js');
+
+            /* The `js` class hides the CSS-only fallback navigation and assumes
+               the bundle will take over. A blocked, failed or never-evaluated
+               bundle never sets `nav-ready`, so the class is dropped again: the
+               fallback navigation comes back instead of leaving the visitor
+               without any mobile navigation. The navigation module sets the
+               marker itself, so a drawer that fails to initialise is covered
+               as well.
+
+               The timer is armed before the theme setup below, because blocked
+               storage throws out of that block - and a visitor whose storage is
+               blocked is exactly the one who must not be left without a menu. */
+            window.setTimeout(function () {
+                if (!root.classList.contains('nav-ready')) {
+                    root.classList.remove('js');
+                }
+            }, 3000);
+
             try {
-                document.documentElement.classList.add('js');
                 var stored = window.localStorage.getItem('theme');
                 var theme = (stored === 'light' || stored === 'dark')
                     ? stored
                     : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-                document.documentElement.classList.toggle('dark', theme === 'dark');
-                document.documentElement.style.colorScheme = theme;
-                document.documentElement.dataset.theme = theme;
+                root.classList.toggle('dark', theme === 'dark');
+                root.style.colorScheme = theme;
+                root.dataset.theme = theme;
             } catch (error) {
                 /* storage blocked — fall back to the light palette */
             }

@@ -1,0 +1,159 @@
+# Manual release build of the application image.
+#
+# Actions tab -> "Docker Release" -> "Run workflow", type the version to publish
+# (`v1.0.1`) and the image is pushed to GHCR under two tags: that version and
+# `latest`. Because `latest` is a moving tag it always points at the newest
+# build, so the previous version keeps only its own tag. No commit-SHA tag is
+# produced.
+#
+# Only the newest `KEEP_VERSIONS` releases stay in the registry; the older ones
+# are removed after a successful push, together with the untagged attestation
+# manifests that are older than `KEEP_UNTAGGED_DAYS`.
+
+name: Docker Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish, for example v1.0.1'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+
+# Two releases must never run at the same time: both would push `latest` and
+# prune the registry at the same moment.
+concurrency:
+  group: docker-release
+  cancel-in-progress: false
+
+env:
+  KEEP_VERSIONS: 8
+  # Untagged versions (the provenance and SBOM attestations of a release) are
+  # kept for this long and then removed with the release they belong to.
+  KEEP_UNTAGGED_DAYS: 30
+
+jobs:
+  release:
+    name: Build and publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+
+      - name: Validate the version
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          if [[ ! "$VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Expected a version like v1.0.1, received '$VERSION'."
+            exit 1
+          fi
+
+      - name: Point the lock file at GitHub for this run
+        run: |
+          # The committed lock keeps the mirror the maintainers use locally; the
+          # runner cannot reach it, so only this working copy is rewritten. The
+          # build context picks the rewritten file up.
+          if grep -q 'https://mirror-composer.runflare.com/repos/' composer.lock; then
+            sed -i 's|https://mirror-composer.runflare.com/repos/|https://api.github.com/repos/|g' composer.lock
+          fi
+
+      - name: Resolve the image, the package and the retention
+        id: names
+        run: |
+          echo "image=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+          package="${GITHUB_REPOSITORY#*/}"
+          echo "package=${package,,}" >> "$GITHUB_OUTPUT"
+          echo "keep=${KEEP_VERSIONS}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to the GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute the tags and labels
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ steps.names.outputs.image }}
+          tags: |
+            type=raw,value=${{ inputs.version }}
+            type=raw,value=latest
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        env:
+          # The lock rewrite above sends composer to api.github.com, which allows
+          # only 60 anonymous downloads an hour. `secret-envs` forwards the token
+          # to the build as a secret, so it never lands in an image layer.
+          COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ github.token }}"}}'
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          secret-envs: composer_auth=COMPOSER_AUTH
+          cache-from: type=gha,scope=release
+          cache-to: type=gha,mode=max,scope=release
+          provenance: true
+          sbom: true
+
+      - name: Select the versions to delete
+        id: prune
+        env:
+          # `github.token` can only delete a container package version when the
+          # repository holds the Admin role under the package's "Manage Actions
+          # Access". When that is not the case the run fails with 403 here, and
+          # a PAT with the `delete:packages` scope must be stored as the
+          # PACKAGES_TOKEN secret - no other change is needed.
+          GH_TOKEN: ${{ secrets.PACKAGES_TOKEN || github.token }}
+          PACKAGE: ${{ steps.names.outputs.package }}
+          OWNER_TYPE: ${{ github.event.repository.owner.type }}
+          KEEP: ${{ steps.names.outputs.keep }}
+          KEEP_UNTAGGED_DAYS: ${{ env.KEEP_UNTAGGED_DAYS }}
+        run: |
+          # GHCR names a container version by its digest, so the `ignore-versions`
+          # input of the delete action can never match a tag such as `latest` or
+          # `v1.0.1`. The versions are therefore selected here, in two groups:
+          #
+          #   * the releases beyond the newest $KEEP, newest first - only the
+          #     versions that carry a `vX.Y.Z` tag take part in that count;
+          #   * the untagged versions older than $KEEP_UNTAGGED_DAYS. Provenance
+          #     and SBOM attestations are pushed as untagged manifests, so
+          #     without this group the registry grows with every release.
+          if [ "$OWNER_TYPE" = "Organization" ]; then
+            api="orgs/${GITHUB_REPOSITORY_OWNER}/packages/container/${PACKAGE}/versions"
+          else
+            api="users/${GITHUB_REPOSITORY_OWNER}/packages/container/${PACKAGE}/versions"
+          fi
+
+          cutoff=$(date -u -d "${KEEP_UNTAGGED_DAYS} days ago" +%Y-%m-%dT%H:%M:%SZ)
+
+          ids=$(gh api --paginate "$api" --jq '.[]' | jq -rs --argjson keep "$KEEP" --arg cutoff "$cutoff" '
+            (map(select([.metadata.container.tags[]? | select(test("^v[0-9]+\\.[0-9]+\\.[0-9]+$"))] | length > 0))
+              | sort_by(.created_at) | reverse | .[$keep:])
+            + (map(select((.metadata.container.tags // []) | length == 0))
+              | map(select(.created_at < $cutoff)))
+            | map(.id) | unique | join(",")')
+
+          echo "ids=$ids" >> "$GITHUB_OUTPUT"
+          echo "versions to delete: ${ids:-none}"
+
+      - name: Delete the versions beyond the retention window
+        if: steps.prune.outputs.ids != ''
+        uses: actions/delete-package-versions@v5
+        with:
+          token: ${{ secrets.PACKAGES_TOKEN || github.token }}
+          package-version-ids: ${{ steps.prune.outputs.ids }}
+          package-name: ${{ steps.names.outputs.package }}
+          package-type: container

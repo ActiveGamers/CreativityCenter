@@ -274,6 +274,25 @@ outside Docker. Cached artifacts in Docker are ephemeral and do not reflect file
 After any config or Horizon supervisor change, restart the relevant container so the new
 configuration is picked up.
 
+### ImageMagick is the only image engine
+`config/media-library.php` selects `imagick`, and the `app` image installs ImageMagick with the
+jpeg, png, gif, webp, tiff and heic/avif delegates plus the PECL `imagick` extension, then asserts
+both during the build. PDF input goes through `ghostscript`, which the image installs and re-enables
+for reading in ImageMagick's coder policy, with `spatie/pdf-to-image` doing the conversion.
+**GD is not installed**, so it must never come back as the driver, as a fallback or as a new
+dependency: new image work extends the ImageMagick path instead.
+
+### Continuous integration and releases
+`.github/workflows` holds four workflows: `QA` (the test suite on every push to `dev`/`main` and on
+every pull request — code style is not part of it), `OSV-Scanner` (dependency scan), `Auto-assign`
+(a new issue or pull request is assigned to the maintainer) and `Docker Release` (manual only: type a
+version, the run pushes that tag plus `latest` to GHCR, keeps the newest 8 releases and drops the
+untagged attestations after 30 days). Never create release tags or push images by hand.
+
+Deleting a package version needs the repository to hold the Admin role under the package's
+"Manage Actions Access"; when it does not, store a PAT with the `delete:packages` scope as
+`PACKAGES_TOKEN` — the workflow falls back to it without any other change.
+
 ## 6. Git Workflow
 
 ### Session-start git check (mandatory, every session)
@@ -416,7 +435,9 @@ contain parts 1 and 2; add part 3 only when it genuinely matters.
   generic error). Replace blocking `alert()` with a toast. Route all `catch` paths to a Persian
   toast; `console.*` alone is not user feedback.
 - **Error views:** every page under `resources/views/errors/` extends the shared error layout,
-  states what happened + what to do, and links contact support in its action buttons.
+  states what happened + what to do, and links contact support in its action buttons — except the
+  full-page 419 view, which offers «تلاش دوباره» and «صفحهٔ اصلی» only (see the fixed wording
+  above): an expired session is a self-service error, so it must not carry a contact link.
 
 ## 11. Testing
 

@@ -118,7 +118,10 @@ Host fallback: `php artisan key:generate`.
 
 **Step 4 — Configure `.env`**
 
-Set your database and Redis credentials. The container reads the same `.env` through the bind mount.
+Configure container database settings with the `DOCKER_DB_*` variables referenced in
+`docker-compose.yml`. These override the corresponding `DB_*` values in `.env` inside containers;
+the `.env` `DB_*` values are used only by the host fallback. Redis credentials and other settings
+are read from the bind-mounted `.env`.
 
 **Step 5 — Migrate and seed**
 
@@ -140,13 +143,11 @@ The production build is the required final state: never leave `npm run dev` runn
 step of the setup. Start the dev server only while you work on the frontend, then run
 `npm run build` again before you finish.
 
-**Step 8 — Run the services (in separate terminals)**
+**Step 8 — Open the application**
 
-    docker compose exec app php artisan horizon
+With Docker, the application is already running at `http://localhost:8080` by default.
 
-Host fallback: `php artisan serve` and `php artisan horizon`.
-
-We recommend running Horizon locally so you can inspect queued jobs during development.
+Host fallback: `php artisan serve`.
 
 ---
 
@@ -156,7 +157,7 @@ This project uses a **two-branch** model:
 
 | Branch   | Purpose                                              | Rules                                              |
 |----------|------------------------------------------------------|----------------------------------------------------|
-| `main`   | Production-ready code only. Deployed to production.  | **Protected.** No direct pushes, no PRs allowed.   |
+| `main`   | Production-ready code only. Deployed to production.  | **Protected.** No direct pushes; only maintainers’ promotion PRs from `dev` are allowed. |
 | `dev`    | Active development and integration branch.           | **Protected.** PRs only, no direct pushes.         |
 
 ### Important: PRs are only accepted against `dev`

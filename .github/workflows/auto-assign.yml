@@ -15,7 +15,8 @@ on:
     types: [opened]
 
 permissions:
-  contents: read
+  # Nothing in this workflow reads the repository: it only calls the assignee
+  # endpoint, which the two scopes below cover.
   issues: write
   pull-requests: write
 

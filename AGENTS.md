@@ -283,11 +283,15 @@ for reading in ImageMagick's coder policy, with `spatie/pdf-to-image` doing the 
 dependency: new image work extends the ImageMagick path instead.
 
 ### Continuous integration and releases
-`.github/workflows` holds four workflows: `QA` (the test suite on every push and pull request — code
-style is not part of it), `OSV-Scanner` (dependency scan), `Auto-assign` (a new issue or pull request
-is assigned to the maintainer) and `Docker Release` (manual only: type a version, the run pushes that
-tag plus `latest` to GHCR and keeps the newest 8 versions). Never create release tags or push images
-by hand.
+`.github/workflows` holds four workflows: `QA` (the test suite on every push to `dev`/`main` and on
+every pull request — code style is not part of it), `OSV-Scanner` (dependency scan), `Auto-assign`
+(a new issue or pull request is assigned to the maintainer) and `Docker Release` (manual only: type a
+version, the run pushes that tag plus `latest` to GHCR, keeps the newest 8 releases and drops the
+untagged attestations after 30 days). Never create release tags or push images by hand.
+
+Deleting a package version needs the repository to hold the Admin role under the package's
+"Manage Actions Access"; when it does not, store a PAT with the `delete:packages` scope as
+`PACKAGES_TOKEN` — the workflow falls back to it without any other change.
 
 ## 6. Git Workflow
 

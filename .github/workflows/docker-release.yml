@@ -6,8 +6,9 @@
 # build, so the previous version keeps only its own tag. No commit-SHA tag is
 # produced.
 #
-# Only the newest `KEEP_VERSIONS` versions stay in the registry; the oldest ones
-# are removed after a successful push.
+# Only the newest `KEEP_VERSIONS` releases stay in the registry; the older ones
+# are removed after a successful push, together with the untagged attestation
+# manifests that are older than `KEEP_UNTAGGED_DAYS`.
 
 name: Docker Release
 
@@ -31,6 +32,9 @@ concurrency:
 
 env:
   KEEP_VERSIONS: 8
+  # Untagged versions (the provenance and SBOM attestations of a release) are
+  # kept for this long and then removed with the release they belong to.
+  KEEP_UNTAGGED_DAYS: 30
 
 jobs:
   release:
@@ -104,31 +108,43 @@ jobs:
           provenance: true
           sbom: true
 
-      - name: Select the versions beyond the retention window
+      - name: Select the versions to delete
         id: prune
         env:
-          GH_TOKEN: ${{ github.token }}
+          # `github.token` can only delete a container package version when the
+          # repository holds the Admin role under the package's "Manage Actions
+          # Access". When that is not the case the run fails with 403 here, and
+          # a PAT with the `delete:packages` scope must be stored as the
+          # PACKAGES_TOKEN secret - no other change is needed.
+          GH_TOKEN: ${{ secrets.PACKAGES_TOKEN || github.token }}
           PACKAGE: ${{ steps.names.outputs.package }}
+          OWNER_TYPE: ${{ github.event.repository.owner.type }}
           KEEP: ${{ steps.names.outputs.keep }}
+          KEEP_UNTAGGED_DAYS: ${{ env.KEEP_UNTAGGED_DAYS }}
         run: |
           # GHCR names a container version by its digest, so the `ignore-versions`
           # input of the delete action can never match a tag such as `latest` or
-          # `v1.0.1`. The versions are therefore selected here: only versions that
-          # carry a release tag count, newest first, and everything after the
-          # first $KEEP of them is deleted. Untagged attestation manifests belong
-          # to a release and are left alone.
-          api="orgs/${GITHUB_REPOSITORY_OWNER}/packages/container/${PACKAGE}/versions"
-          if ! gh api "$api" >/dev/null 2>&1; then
+          # `v1.0.1`. The versions are therefore selected here, in two groups:
+          #
+          #   * the releases beyond the newest $KEEP, newest first - only the
+          #     versions that carry a `vX.Y.Z` tag take part in that count;
+          #   * the untagged versions older than $KEEP_UNTAGGED_DAYS. Provenance
+          #     and SBOM attestations are pushed as untagged manifests, so
+          #     without this group the registry grows with every release.
+          if [ "$OWNER_TYPE" = "Organization" ]; then
+            api="orgs/${GITHUB_REPOSITORY_OWNER}/packages/container/${PACKAGE}/versions"
+          else
             api="users/${GITHUB_REPOSITORY_OWNER}/packages/container/${PACKAGE}/versions"
           fi
 
-          ids=$(gh api --paginate "$api" --jq '.[]' | jq -rs --argjson keep "$KEEP" '
-            map(select([.metadata.container.tags[]? | select(test("^v[0-9]+\\.[0-9]+\\.[0-9]+$"))] | length > 0))
-            | sort_by(.created_at)
-            | reverse
-            | .[$keep:]
-            | map(.id)
-            | join(",")')
+          cutoff=$(date -u -d "${KEEP_UNTAGGED_DAYS} days ago" +%Y-%m-%dT%H:%M:%SZ)
+
+          ids=$(gh api --paginate "$api" --jq '.[]' | jq -rs --argjson keep "$KEEP" --arg cutoff "$cutoff" '
+            (map(select([.metadata.container.tags[]? | select(test("^v[0-9]+\\.[0-9]+\\.[0-9]+$"))] | length > 0))
+              | sort_by(.created_at) | reverse | .[$keep:])
+            + (map(select((.metadata.container.tags // []) | length == 0))
+              | map(select(.created_at < $cutoff)))
+            | map(.id) | unique | join(",")')
 
           echo "ids=$ids" >> "$GITHUB_OUTPUT"
           echo "versions to delete: ${ids:-none}"
@@ -137,6 +153,7 @@ jobs:
         if: steps.prune.outputs.ids != ''
         uses: actions/delete-package-versions@v5
         with:
+          token: ${{ secrets.PACKAGES_TOKEN || github.token }}
           package-version-ids: ${{ steps.prune.outputs.ids }}
           package-name: ${{ steps.names.outputs.package }}
           package-type: container

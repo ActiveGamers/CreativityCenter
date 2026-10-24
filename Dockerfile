@@ -110,11 +110,20 @@ RUN convert -version \
 # so appending a `read` rule re-opens PDF *input* only: PostScript, EPS and XPS
 # stay denied, and writing a PDF stays denied too.
 #
+# Re-opening PDF input also re-opens the renderer, so the same insertion caps
+# what a single document may consume: 512MiB of memory, 1GiB of memory map,
+# 2GiB of disk (the spilling point, not a container limit), 128MP of area and
+# 16384px per side. A crafted PDF or image can then only fail the conversion,
+# not take the container down. Both the limits and the coder rule are asserted
+# below, so a policy file that no longer matches the expected layout fails the
+# build instead of silently losing the hardening.
+#
 # The assertion converts a PDF generated on the spot, because the media library
 # only thumbnails a PDF when both halves (the binary and the policy) are in
 # place.
-RUN sed -i 's|</policymap>|  <policy domain="coder" rights="read" pattern="PDF" />\n</policymap>|' /etc/ImageMagick-6/policy.xml \
+RUN sed -i 's|</policymap>|  <policy domain="coder" rights="read" pattern="PDF" />\n  <policy domain="resource" name="memory" value="512MiB" />\n  <policy domain="resource" name="map" value="1GiB" />\n  <policy domain="resource" name="disk" value="2GiB" />\n  <policy domain="resource" name="area" value="128MP" />\n  <policy domain="resource" name="width" value="16KP" />\n  <policy domain="resource" name="height" value="16KP" />\n</policymap>|' /etc/ImageMagick-6/policy.xml \
     && grep -q 'rights="read" pattern="PDF"' /etc/ImageMagick-6/policy.xml \
+    && grep -q 'name="memory" value="512MiB"' /etc/ImageMagick-6/policy.xml \
     && printf '%s\n' '%!PS-Adobe-3.0' '/Helvetica findfont 12 scalefont setfont 10 10 moveto (pdf probe) show showpage' > /tmp/probe.ps \
     && gs -q -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=/tmp/probe.pdf /tmp/probe.ps \
     && convert /tmp/probe.pdf /tmp/probe.png \

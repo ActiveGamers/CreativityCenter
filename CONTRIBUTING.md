@@ -86,6 +86,11 @@ Feature requests that lack a clear use case may be closed.
   - **Windows host**: install ImageMagick (Q16-HDRI, 64-bit) with *Add application directory to your
     system path*, install Ghostscript for PDF input, then enable the `php_imagick.dll` matching your
     PHP version, thread safety and compiler in `php.ini` (`extension=imagick`).
+- PHP **8.3+** with the **`pcntl`**, **`posix`** and **`redis`** extensions for the Horizon host
+  fallback: the master supervisor needs `pcntl` and `posix`, and `REDIS_CLIENT=phpredis` selects the
+  phpredis driver of the queue connection. Windows PHP builds ship neither `pcntl` nor `posix`, so
+  the host fallback (`php artisan horizon`) needs Docker or WSL there. The Docker path needs
+  nothing: the `app` image installs and asserts all three.
 - Composer **2.x**
 - Node.js **20.19+** or **22.12+** and npm
 - MySQL **8.x** or PostgreSQL **15+**

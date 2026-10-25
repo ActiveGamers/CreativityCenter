@@ -173,7 +173,13 @@
 
             <p class="inline-flex items-center gap-1.5 text-ink-200/90">
                 <x-icon name="spark" class="size-4 shrink-0 text-brand-300" />
-                <span>طراح و سازندگان: سید امین پور سیدی؛ محمد طاها امیدی</span>
+                <span>
+                    طراح و سازندگان:
+                    <a href="https://github.com/ActiveGamers"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="font-medium text-ink-100 transition-colors hover:text-brand-300">محمدطاها امیدی</a>
+                </span>
             </p>
         </div>
     </div>

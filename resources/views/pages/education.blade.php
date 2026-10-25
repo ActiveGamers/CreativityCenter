@@ -1,25 +1,28 @@
 @php
-    $gradeLabels = collect(\App\Enums\GradeLevel::ordered());
-
-    $allCourses = collect($coursesByGrade)->flatMap(fn ($items) => $items);
-
-    $totalCourses = $allCourses->count();
-
-    $totalHours = $allCourses->sum(fn ($course) => (int) ($course->weekly_hours ?? 0));
-
     $faDigits = fn ($value): string => strtr((string) $value, [
         '0' => '۰', '1' => '۱', '2' => '۲', '3' => '۳', '4' => '۴',
         '5' => '۵', '6' => '۶', '7' => '۷', '8' => '۸', '9' => '۹',
     ]);
+
+    /* One visual tone per major accent: a soft gradient for the card header
+       and a matching colour for the icon. The accents come from
+       config/education.php, so a future admin panel changes the look here
+       by changing the data alone. */
+    $accentStyles = [
+        'brand'   => ['panel' => 'from-brand-500/15 to-brand-500/0',  'icon' => 'text-brand-600 dark:text-brand-300'],
+        'accent'  => ['panel' => 'from-accent-500/15 to-accent-500/0', 'icon' => 'text-accent-600 dark:text-accent-300'],
+        'ink'     => ['panel' => 'from-ink-500/15 to-ink-500/0',       'icon' => 'text-ink-700 dark:text-ink-100'],
+        'success' => ['panel' => 'from-emerald-500/15 to-emerald-500/0', 'icon' => 'text-emerald-600 dark:text-emerald-300'],
+    ];
 @endphp
 
 <x-layouts.app
     title="برنامهٔ درسی"
-    description="فهرست کامل دروس هنرستان فنی پسرانه جوار شرکت پالایش نفت بندرعباس پایه به پایه، همراه با شرح کوتاه و ساعات هفتگی هر درس.">
+    description="فهرست دروس هنرستان به تفکیک رشته و پایه، همراه با ساعات هفتگی و شرح کوتاه هر درس. هر رشته جدول مستقل خود را دارد.">
 
     <x-page-hero
         title="فهرست دروس و ساعات هفتگی"
-        description="فهرست دروس هنرستان در سه پایهٔ تحصیلی ارائه می‌شود. در جدول‌های زیر، عنوان هر درس و شرح کوتاه آن آمده است."
+        description="برنامهٔ درسی هنرستان به تفکیک رشته و پایه ارائه می‌شود. هر جدول فهرست دروس، ساعات هفتگی و شرح هر درس را نشان می‌دهد."
         :items="[
             ['label' => 'خانه', 'href' => route('home')],
             ['label' => 'برنامهٔ درسی'],
@@ -29,80 +32,97 @@
             ['label' => 'مجموع ساعات هفتگی', 'value' => $faDigits($totalHours) . ' ساعت'],
         ]" />
 
-    {{-- رشته‌ها --}}
+    {{-- یک جدول به ازای هر رشته --}}
     <section class="section-y">
         <div class="container-page">
             <x-section-heading
-                kicker="دو رشتهٔ هنرستان"
-                title="دروس هر رشته، جدا از دیگری"
-                description="دروس مشترک و دروس تخصصی در جدول‌های ادامه، با نام رشته مشخص شده‌اند. برای توضیح کامل هر رشته، صفحهٔ اختصاصی آن را ببینید." />
+                kicker="برنامهٔ درسی"
+                title="دروس هر رشته، در جدولی مستقل"
+                description="برای هر رشته یک جدول جداگانه نمایش داده می‌شود. برنامه‌ها از طریق پیکربندی قابل ویرایش هستند و در آینده از پنل مدیریت پشتیبانی خواهند شد." />
 
-            <div class="mt-10 grid gap-6 lg:grid-cols-2">
-                @foreach ($majors as $major)
-                    <x-major-card :major="$major" />
-                @endforeach
-            </div>
-        </div>
-    </section>
+            @if ($majors->isEmpty())
+                <x-empty-state
+                    title="هنوز رشته‌ای تعریف نشده است."
+                    description="به‌محض ثبت رشته‌ها در پیکربندی، جداول برنامهٔ درسی در اینجا نمایش داده می‌شوند."
+                    icon="graduation"
+                    class="mt-10" />
+            @else
+                <div class="mt-10 flex flex-col gap-12">
+                    @foreach ($majors as $major)
+                        @php
+                            $tone = $accentStyles[data_get($major, 'accent', 'brand')] ?? $accentStyles['brand'];
+                            $icon = data_get($major, 'icon', 'chip');
+                        @endphp
 
-    {{-- فهرست دروس پایه به پایه --}}
-    <section class="section-y bg-ink-50/60 dark:bg-ink-950/50">
-        <div class="container-page">
-            <x-section-heading
-                kicker="فهرست دروس"
-                title="دروس هر پایه، تفکیک‌شده بر اساس رشته"
-                description="هر درس با نام رشته و ساعات هفتگی‌اش آمده است. در نمایش رایانه، جدول‌ها کنار هم دیده می‌شوند و در نمایش تلفن به کارت‌های خوانا تبدیل می‌شوند." />
+                        <article class="surface-card overflow-hidden" data-reveal>
+                            <header class="flex flex-wrap items-start justify-between gap-5 border-b border-ink-900/8 bg-gradient-to-bl {{ $tone['panel'] }} px-6 py-6 dark:border-white/10">
+                                <div class="flex items-center gap-4">
+                                    <span class="grid size-12 shrink-0 place-items-center rounded-2xl bg-white/80 shadow-sm ring-1 ring-ink-900/5 dark:bg-ink-900/60 dark:ring-white/10">
+                                        <x-icon :name="$icon" class="size-6 {{ $tone['icon'] }}" />
+                                    </span>
 
-            <div class="mt-10 flex flex-col gap-14">
-                @foreach ($gradeLabels as $grade)
-                    @php $gradeCourses = $coursesByGrade[$grade->value] ?? collect(); @endphp
+                                    <div>
+                                        <h2 class="font-display text-xl font-extrabold text-ink-900 dark:text-white">
+                                            {{ $major['title'] }}
+                                        </h2>
+                                        <p class="mt-1 text-sm leading-7 text-slate-600 dark:text-ink-200">{{ $major['subtitle'] }}</p>
+                                    </div>
+                                </div>
 
-                    <div class="flex flex-col gap-5" data-reveal>
-                        <div class="flex flex-wrap items-center justify-between gap-4">
-                            <div class="flex items-center gap-3">
-                                <span class="grid size-11 shrink-0 place-items-center rounded-xl bg-ink-900 text-sm font-bold text-white dark:bg-white dark:text-ink-950">
-                                    {{ $faDigits($grade->order()) }}
-                                </span>
+                                <dl class="flex gap-6">
+                                    <div class="text-center">
+                                        <dt class="text-xs text-slate-500 dark:text-ink-300">دروس</dt>
+                                        <dd class="font-display text-2xl font-extrabold leading-none text-ink-900 dark:text-white">
+                                            <x-pages.fa-number :value="$major['course_count']" />
+                                        </dd>
+                                    </div>
 
-                                <h3 class="font-display text-xl font-extrabold text-ink-900 dark:text-white">
-                                    پایهٔ {{ $grade->label() }}
-                                </h3>
+                                    <div class="text-center">
+                                        <dt class="text-xs text-slate-500 dark:text-ink-300">ساعت</dt>
+                                        <dd class="font-display text-2xl font-extrabold leading-none text-ink-900 dark:text-white">
+                                            <x-pages.fa-number :value="$major['weekly_hours']" />
+                                        </dd>
+                                    </div>
+                                </dl>
+                            </header>
+
+                            @if (filled($major['summary']))
+                                <p class="px-6 pt-6 text-sm leading-8 text-slate-600 dark:text-ink-200">{{ $major['summary'] }}</p>
+                            @endif
+
+                            <div class="p-6 pt-4">
+                                <x-pages.major-curriculum-table
+                                    :major="$major"
+                                    caption="برنامهٔ درسی رشتهٔ {{ $major['title'] }}" />
                             </div>
-
-                            <span class="text-xs text-slate-500 dark:text-ink-300">
-                                {{ $faDigits($gradeCourses->count()) }} درس
-                            </span>
-                        </div>
-
-                        <x-pages.curriculum-table
-                            :courses="$gradeCourses"
-                            :majors="$majors"
-                            show-major
-                            caption="فهرست دروس به تفکیک رشته" />
-                    </div>
-                @endforeach
-            </div>
+                        </article>
+                    @endforeach
+                </div>
+            @endif
         </div>
     </section>
 
     {{-- راهنمای انتخاب --}}
-    <section class="section-y">
-        <div class="container-page grid gap-6 lg:grid-cols-3">
-            @foreach ([
-                ['icon' => 'graduation', 'title' => 'پایهٔ دهم', 'text' => 'دورهٔ مشترک آشنایی با شبکه، سخت‌افزار، مدارهای الکتریکی و مبانی برنامه‌نویسی؛ نقطهٔ شروع کارگاه‌های تخصصی.'],
-                ['icon' => 'chart', 'title' => 'پایهٔ یازدهم', 'text' => 'ورود به دروس تخصصی: طراحی و پیکربندی شبکه، امنیت، کنترل صنعتی، PLC و رباتیک.'],
-                ['icon' => 'trophy', 'title' => 'پایهٔ دوازدهم', 'text' => 'پروژه‌های عملی و کارگاه پایانی؛ از مدیریت سرور و سرویس‌های سازمانی تا ساخت کامل یک سامانهٔ مکاترونیکی.'],
-            ] as $step)
-                <div class="surface-card flex flex-col gap-3.5 p-6">
-                    <span class="grid size-11 shrink-0 place-items-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-950/60 dark:text-accent-300">
-                        <x-icon :name="$step['icon']" class="size-5" />
-                    </span>
+    <section class="section-y bg-ink-50/60 dark:bg-ink-950/50">
+        <div class="container-page">
+            <x-section-heading
+                kicker="راهنمای انتخاب"
+                title="مسیر هر دانش‌آموز در سه پایه"
+                description="هر پایه گامی رو به جلو در مسیر تخصص است: از آشنایی اولیه تا پروژه‌های عملی و کارگاه پایانی." />
 
-                    <h3 class="font-display text-base font-bold text-ink-900 dark:text-white">{{ $step['title'] }}</h3>
+            <div class="mt-10 grid gap-6 lg:grid-cols-3">
+                @foreach ($guidance as $step)
+                    <div class="surface-card flex flex-col gap-3.5 p-6">
+                        <span class="grid size-11 shrink-0 place-items-center rounded-xl bg-accent-50 text-accent-600 dark:bg-accent-950/60 dark:text-accent-300">
+                            <x-icon :name="$step['icon']" class="size-5" />
+                        </span>
 
-                    <p class="text-sm leading-8 text-slate-600 dark:text-ink-200">{{ $step['text'] }}</p>
-                </div>
-            @endforeach
+                        <h3 class="font-display text-base font-bold text-ink-900 dark:text-white">{{ $step['title'] }}</h3>
+
+                        <p class="text-sm leading-8 text-slate-600 dark:text-ink-200">{{ $step['text'] }}</p>
+                    </div>
+                @endforeach
+            </div>
         </div>
     </section>
 

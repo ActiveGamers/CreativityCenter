@@ -215,7 +215,11 @@ test('the footer credits the designers exactly once', function () {
     $response->assertOk();
 
     expect(substr_count($response->getContent(), 'طراح و سازندگان'))->toBe(1);
-    $response->assertSee('طراح و سازندگان: سید امین پور سیدی؛ محمد طاها امیدی');
+
+    /* A single credit names the designer and links to the studio organisation. */
+    $response->assertSee('طراح و سازندگان:');
+    $response->assertSee('محمدطاها امیدی');
+    $response->assertSee('https://github.com/ActiveGamers');
 });
 
 test('the three storytelling pages stay free of the English placeholder copy', function () {

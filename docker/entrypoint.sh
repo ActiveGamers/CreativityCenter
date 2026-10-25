@@ -16,6 +16,10 @@
 #   6. apply the pending database migrations (only when AUTO_MIGRATE is on)
 #   7. hand over to the container command (php-fpm by default) as www-data
 #
+# Steps 1 to 4 write into the shared bind-mounted tree, so they run under one
+# exclusive lock: the app, horizon and scheduler containers execute them at
+# the same time.
+#
 # IMPORTANT (AGENTS.md section 5): this script must never run an
 # optimize/cache command (optimize, config:cache, view:cache, route:cache,
 # event:cache, ...). Only the `clear` variants are allowed.
@@ -77,6 +81,19 @@ is_truthy() {
         *) return 1 ;;
     esac
 }
+
+# ---------------------------------------------------------------------------
+# Bootstrap lock
+# ---------------------------------------------------------------------------
+# The app, horizon and scheduler containers run this script at the same time
+# and share the bind-mounted working copy. One exclusive lock serializes every
+# step below that writes into it (sections 1 to 4): without it one container
+# could copy .env.example over the .env file in which another container has
+# just written APP_KEY (leaving a container that booted earlier with an empty
+# key), or fail its asset restore because a peer is copying the same files
+# into public/build.
+exec 9>"${APP_DIR}/.env.lock"
+flock -x 9
 
 # ---------------------------------------------------------------------------
 # 1) Environment file bootstrap
@@ -153,6 +170,10 @@ if [ ! -e public/storage ]; then
         warn "storage:link failed - continuing without it"
     fi
 fi
+
+# The shared tree is prepared: the peer containers may take over.
+flock -u 9
+exec 9>&-
 
 # ---------------------------------------------------------------------------
 # 5) SQLite database file

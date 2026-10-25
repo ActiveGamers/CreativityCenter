@@ -86,6 +86,11 @@ Feature requests that lack a clear use case may be closed.
   - **Windows host**: install ImageMagick (Q16-HDRI, 64-bit) with *Add application directory to your
     system path*, install Ghostscript for PDF input, then enable the `php_imagick.dll` matching your
     PHP version, thread safety and compiler in `php.ini` (`extension=imagick`).
+- PHP **8.3+** with the **`pcntl`**, **`posix`** and **`redis`** extensions for the Horizon host
+  fallback: the master supervisor needs `pcntl` and `posix`, and `REDIS_CLIENT=phpredis` selects the
+  phpredis driver of the queue connection. Windows PHP builds ship neither `pcntl` nor `posix`, so
+  the host fallback (`php artisan horizon`) needs Docker or WSL there. The Docker path needs
+  nothing: the `app` image installs and asserts all three.
 - Composer **2.x**
 - Node.js **20.19+** or **22.12+** and npm
 - MySQL **8.x** or PostgreSQL **15+**
@@ -118,7 +123,11 @@ Host fallback: `php artisan key:generate`.
 
 **Step 4 — Configure `.env`**
 
-Set your database and Redis credentials. The container reads the same `.env` through the bind mount.
+Inside the containers, the database settings come from the `DOCKER_DB_*` variables (see the header of
+`docker-compose.yml`); `DB_*` values in `.env` are overridden there and apply only to the host
+fallback. The same holds for `REDIS_HOST` and `QUEUE_CONNECTION`, which the containers take from the
+`redis` service. Every other setting — the app key, mail, broadcasting, the school profile — is read
+from `.env` through the bind mount.
 
 **Step 5 — Migrate and seed**
 
@@ -140,13 +149,24 @@ The production build is the required final state: never leave `npm run dev` runn
 step of the setup. Start the dev server only while you work on the frontend, then run
 `npm run build` again before you finish.
 
-**Step 8 — Run the services (in separate terminals)**
+**Step 8 — Horizon and the queue workers**
 
-    docker compose exec app php artisan horizon
+`docker compose up -d` of Step 1 already started the `horizon` service: the master supervisor runs
+the queue workers (the media conversions, ...) and the dashboard is open at
+http://localhost:8080/horizon. Watch the workers with:
 
-Host fallback: `php artisan serve` and `php artisan horizon`.
+    docker compose logs --tail 30 horizon
 
-We recommend running Horizon locally so you can inspect queued jobs during development.
+After a code change the workers keep the old code until they are told to terminate, so restart them
+before you test the new code:
+
+    docker compose exec app php artisan horizon:terminate
+
+Host fallback (containers unavailable): `php artisan serve` for the site and `php artisan horizon`
+for the queue workers.
+
+We recommend keeping Horizon running locally so you can inspect queued jobs during development: the
+dashboard shows every job — the media conversions included — as it is processed.
 
 ---
 
@@ -156,7 +176,7 @@ This project uses a **two-branch** model:
 
 | Branch   | Purpose                                              | Rules                                              |
 |----------|------------------------------------------------------|----------------------------------------------------|
-| `main`   | Production-ready code only. Deployed to production.  | **Protected.** No direct pushes, no PRs allowed.   |
+| `main`   | Production-ready code only. Deployed to production.  | **Protected.** No direct pushes. Only the maintainers' promotion PR from `dev`. |
 | `dev`    | Active development and integration branch.           | **Protected.** PRs only, no direct pushes.         |
 
 ### Important: PRs are only accepted against `dev`

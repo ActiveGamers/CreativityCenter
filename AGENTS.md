@@ -252,6 +252,10 @@ appropriate container instead of the host machine.
   `docker compose exec app npm run build`. The `node` service (Vite dev server) and the `db`
   service (MySQL) are optional profiles. The project root is only the fallback when the
   containers are not running at all.
+- Beyond the `app` and `nginx` services, `docker compose up -d` always starts the `redis` service
+  (the queue and Horizon store), the `horizon` service (the queue workers, dashboard at
+  `/horizon`) and the `scheduler` service (the schedule that takes the Horizon metrics
+  snapshots). They are part of the stack, not optional profiles.
 
 ### Always rebuild the frontend after any change
 After **every** change to the project — PHP, Blade, JS, CSS, config, or any other file — run

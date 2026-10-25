@@ -27,7 +27,10 @@
         <env name="DB_DATABASE" value=":memory:"/>
         <env name="DB_URL" value=""/>
         <env name="MAIL_MAILER" value="array"/>
-        <env name="QUEUE_CONNECTION" value="sync"/>
+        <!-- force="true": the app container exports QUEUE_CONNECTION=redis for the
+             queue, and without the force flag PHPUnit would keep that value and
+             dispatch the jobs of the suite to Redis instead of running them inline. -->
+        <env name="QUEUE_CONNECTION" value="sync" force="true"/>
         <env name="SESSION_DRIVER" value="array"/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>

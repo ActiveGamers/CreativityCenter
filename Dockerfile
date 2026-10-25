@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 #
-# Application image for the Naft Javan High School website.
+# Application image for the CreativityCenter website.
 #
 #   PHP 8.4 (FPM)  +  Composer 2  +  Node.js 22 / npm
 #

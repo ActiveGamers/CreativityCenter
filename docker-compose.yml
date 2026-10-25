@@ -47,9 +47,9 @@
 # To use the optional MySQL 8 container (profile "db"):
 #
 #   $env:DOCKER_DB_CONNECTION = "mysql"
-#   $env:DOCKER_DB_DATABASE   = "naftjavan"
-#   $env:DOCKER_DB_USERNAME   = "naftjavan"
-#   $env:DOCKER_DB_PASSWORD   = "naftjavan"
+#   $env:DOCKER_DB_DATABASE   = "creativitycenter"
+#   $env:DOCKER_DB_USERNAME   = "creativitycenter"
+#   $env:DOCKER_DB_PASSWORD   = "creativitycenter"
 #   docker compose --profile db up -d          # starts db + app + nginx
 #   docker compose ps                          # wait until the db reports "healthy"
 #
@@ -114,7 +114,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: naftjavan-app:latest
+    image: creativitycenter-app:latest
     working_dir: /var/www/html
     env_file:
       # The .env file is not tracked by git, so it must not abort the start.
@@ -135,8 +135,8 @@ services:
       # A file path for SQLite, the database name for MySQL: the driver reads
       # one and the same DB_DATABASE variable, hence the path as the default.
       DB_DATABASE: "${DOCKER_DB_DATABASE:-/var/www/html/database/database.sqlite}"
-      DB_USERNAME: "${DOCKER_DB_USERNAME:-naftjavan}"
-      DB_PASSWORD: "${DOCKER_DB_PASSWORD:-naftjavan}"
+      DB_USERNAME: "${DOCKER_DB_USERNAME:-creativitycenter}"
+      DB_PASSWORD: "${DOCKER_DB_PASSWORD:-creativitycenter}"
       # Queue and Redis wiring (see the "Queues, Redis and Horizon" section
       # above): Horizon supervises the workers and needs the Redis queue
       # connection. The values win over the bind-mounted .env file, whose
@@ -197,7 +197,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: naftjavan-app:latest
+    image: creativitycenter-app:latest
     working_dir: /var/www/html
     # The Horizon master supervisor: it starts and watches the queue workers
     # and is the process `horizon:terminate` restarts after a code change.
@@ -225,7 +225,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: naftjavan-app:latest
+    image: creativitycenter-app:latest
     working_dir: /var/www/html
     # Runs the schedule of routes/console.php every minute, which is what
     # takes the Horizon metrics snapshots (horizon:snapshot).
@@ -268,10 +268,10 @@ services:
     environment:
       # The same DOCKER_DB_* variables the app service reads, so a changed
       # password, user or database name reaches both containers.
-      MYSQL_DATABASE: "${DOCKER_DB_DATABASE:-naftjavan}"
-      MYSQL_USER: "${DOCKER_DB_USERNAME:-naftjavan}"
-      MYSQL_PASSWORD: "${DOCKER_DB_PASSWORD:-naftjavan}"
-      MYSQL_ROOT_PASSWORD: "${DOCKER_MYSQL_ROOT_PASSWORD:-naftjavan-root}"
+      MYSQL_DATABASE: "${DOCKER_DB_DATABASE:-creativitycenter}"
+      MYSQL_USER: "${DOCKER_DB_USERNAME:-creativitycenter}"
+      MYSQL_PASSWORD: "${DOCKER_DB_PASSWORD:-creativitycenter}"
+      MYSQL_ROOT_PASSWORD: "${DOCKER_MYSQL_ROOT_PASSWORD:-creativitycenter-root}"
     volumes:
       - db_data:/var/lib/mysql
     ports:
@@ -285,7 +285,7 @@ services:
         - "ping"
         - "-h"
         - "127.0.0.1"
-        - "-p${DOCKER_MYSQL_ROOT_PASSWORD:-naftjavan-root}"
+        - "-p${DOCKER_MYSQL_ROOT_PASSWORD:-creativitycenter-root}"
       interval: 10s
       timeout: 5s
       retries: 10

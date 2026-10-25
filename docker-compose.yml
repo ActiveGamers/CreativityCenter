@@ -63,6 +63,16 @@
 # DOCKER_DB_PASSWORD and recreate the app container. Changing only the variable
 # locks the application out of its database.
 #
+# Upgrading a checkout whose db_data volume predates the project rename: the
+# defaults below are creativitycenter now, while an existing volume still
+# holds the naftjavan database and user (MySQL applies MYSQL_* only while the
+# volume is empty). Keep the previous values until the data is migrated:
+#
+#   $env:DOCKER_DB_DATABASE       = "naftjavan"
+#   $env:DOCKER_DB_USERNAME       = "naftjavan"
+#   $env:DOCKER_DB_PASSWORD       = "naftjavan"
+#   $env:DOCKER_MYSQL_ROOT_PASSWORD = "naftjavan-root"
+#
 # The DB_* variables below are driven by the DOCKER_DB_* variables and
 # therefore win over the values of the .env file. The MySQL container is
 # published on the loopback interface only (127.0.0.1:${DOCKER_MYSQL_PORT:-3307}).

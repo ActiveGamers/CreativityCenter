@@ -12,5 +12,9 @@ Artisan::command('inspire', function () {
  * Horizon keeps its queue metrics in Redis and the dashboard reads them from
  * the snapshots. Without this schedule the graphs stay empty, so the snapshot
  * is taken every five minutes (Horizon's documented cadence).
+ *
+ * onOneServer: production runs two blue/green colours and each has its own
+ * scheduler container, so without the cache lock every snapshot would be
+ * taken twice. The lock needs a store that supports it (redis in production).
  */
-Schedule::command('horizon:snapshot')->everyFiveMinutes();
+Schedule::command('horizon:snapshot')->everyFiveMinutes()->onOneServer();

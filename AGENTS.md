@@ -296,16 +296,62 @@ for reading in ImageMagick's coder policy, with `spatie/pdf-to-image` doing the 
 dependency: new image work extends the ImageMagick path instead.
 
 ### Continuous integration and releases
-`.github/workflows` holds four workflows: `QA` (the test suite on every push to `dev`/`main` and on
-every pull request — code style is not part of it), `OSV-Scanner` (dependency scan), `Auto-assign`
-(a new issue or pull request is assigned to the maintainer) and `Docker Release` (manual only: type a
+`.github/workflows` holds six workflows: `QA` (the test suite on every push except `dev`/`main` and
+on every pull request — code style is not part of it), `CD` (on push to `dev`/`main`: calls `QA`,
+builds the two release images, then deploys to production), `Rollback` (manual: flip back to the
+previous colour, or redeploy a named tag), `OSV-Scanner` (dependency scan), `Auto-assign` (a new
+issue or pull request is assigned to the maintainer) and `Docker Release` (manual only: type a
 version, the run pushes that tag plus `latest` to GHCR, keeps the newest 8 releases and drops the
 untagged attestations that belong to the releases it removed). Never create release tags or push
 images by hand.
 
+`QA` is reusable (`workflow_call`) and `CD` calls it, so a push to `dev`/`main` runs the suite
+exactly once. `CD` keeps the newest 10 `sha-<commit>` tags of each delivery package; those builds
+carry no provenance/SBOM attestations, which is what keeps that retention simple. The published
+`Docker Release` versions keep their attestations.
+
 Deleting a package version needs the repository to hold the Admin role under the package's
 "Manage Actions Access"; when it does not, store a PAT with the `delete:packages` scope as
 `PACKAGES_TOKEN` — the workflow falls back to it without any other change.
+
+### Production deployment — blue/green, zero downtime
+Production is **not** Docker Swarm. The host runs several unrelated production apps, and
+`docker swarm init` is a daemon-wide change (a new `docker_gwbridge` subnet, cluster ports) that
+could disturb them. Zero downtime comes from two colour projects instead:
+
+- `deploy/compose.prod.yaml` is instantiated twice, `cc-blue` (nginx on `127.0.0.1:9010`) and
+  `cc-green` (`127.0.0.1:9011`). Each colour is app + nginx + horizon + scheduler, all from one
+  immutable image tag. The source tree is **not** bind mounted — that is the development stack.
+- `deploy/compose.data.yaml` (`cc-data`) owns MySQL and Redis on the external
+  `creativitycenter-data` network. A release never touches it.
+- `Dockerfile.nginx` builds the edge image of a colour from that release's app image, so the two
+  colours serve two asset generations side by side during a flip.
+- The host nginx vhost (`deploy/nginx/CreativityCenter.conf`, public port **5517** until a domain
+  is bought) includes `shared/nginx/upstream.conf`. That included file is the only thing a release
+  rewrites; `nginx -s reload` is graceful, so no connection is dropped.
+
+`deploy/deploy.sh <tag>` is the whole procedure: pull → `up -d --wait` → `/up` through the colour's
+own port → `migrate --force --isolated` → one-time seed → flip → smoke test through the public port
+(including a `build/manifest.json` comparison that proves the new colour answers). A failure before
+the flip leaves the site untouched; a failure after it puts the upstream back. The outgoing colour
+stays warm, so `deploy/rollback.sh` is one reload.
+
+Invariants to preserve:
+- Both colours mount the same `shared/.env` and `shared/storage`, which is what keeps `APP_KEY`,
+  sessions and uploads identical across a flip. Never give a colour its own environment file.
+- `AUTO_MIGRATE=false` in production: the deploy script owns migrations, a container must not race
+  it. Migrations stay backward compatible — a rollback never runs `migrate:rollback`.
+- Both colours run a scheduler, so every scheduled command needs `onOneServer()` (the lock needs a
+  cache store that supports it; production uses `CACHE_STORE=redis`).
+- The edge sets `X-Forwarded-For` to `$remote_addr`, **not** `$proxy_add_x_forwarded_for`: it is the
+  outermost hop and Laravel trusts the whole chain, so appending would let a visitor spoof their
+  own rate-limiter bucket. `docker/nginx/prod.conf` passes that chain through unchanged.
+- No optimize/cache command anywhere in the deploy path (see above).
+
+Server-side secrets and paths live in GitHub secrets (`SSH_HOST`, `SSH_USER`, `SSH_PRIVATE_KEY`,
+`SSH_KNOWN_HOSTS`, `DEPLOY_PATH`). `deploy/provision.sh` is the one-time, idempotent host setup; it
+generates the secrets on the server, never in the repository, and only touches the host nginx with
+`--install-nginx`. It verifies ufw but never changes it.
 
 ## 6. Git Workflow
 

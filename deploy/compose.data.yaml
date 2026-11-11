@@ -1,0 +1,101 @@
+# ---------------------------------------------------------------------------
+# Stateful tier of the production stack: MySQL and Redis, one instance each.
+#
+# This project is long lived. A deployment never touches it - only the two
+# colour projects (deploy/compose.prod.yaml) are recreated - so the database
+# and the queue survive every release and every rollback.
+#
+#   docker compose -p cc-data -f deploy/compose.data.yaml --env-file shared/.env up -d
+#
+# Both services sit on the external `creativitycenter-data` network, which the
+# colour projects join as well. That is how app/horizon/scheduler reach `mysql`
+# and `redis` without publishing anything to the host. The two published ports
+# are loopback only and exist for administration and backups.
+#
+# The credentials come from shared/.env (DB_* and REDIS_PASSWORD), the same file
+# the application reads, so the two can never drift apart. MySQL applies
+# MYSQL_* only while the data directory is empty: rotating a password later
+# means ALTER USER inside MySQL first, then shared/.env, then a recreate.
+# ---------------------------------------------------------------------------
+
+services:
+  mysql:
+    image: mysql:8.4
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_DATABASE: ${DB_DATABASE:?}
+      MYSQL_USER: ${DB_USERNAME:?}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?}
+    volumes:
+      - ${DATA_DIR:?}/mysql:/var/lib/mysql
+    ports:
+      - "127.0.0.1:${MYSQL_HOST_PORT:-3308}:3306"
+    networks:
+      data:
+        aliases:
+          - mysql
+    healthcheck:
+      # $$ keeps the expansion inside the container, where the image already
+      # exports MYSQL_ROOT_PASSWORD, instead of rendering it into the config.
+      test:
+        - "CMD-SHELL"
+        - 'mysqladmin ping -h 127.0.0.1 -p"$$MYSQL_ROOT_PASSWORD" --silent'
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redis:
+    image: redis:7-alpine
+    # appendonly: the queue must not lose accepted jobs on a restart.
+    command:
+      - redis-server
+      - --requirepass
+      - ${REDIS_PASSWORD:?}
+      - --appendonly
+      - "yes"
+      - --save
+      - "60"
+      - "1"
+      - --loglevel
+      - warning
+    environment:
+      # redis-cli reads REDISCLI_AUTH, so the health check needs no password on
+      # its command line.
+      REDISCLI_AUTH: ${REDIS_PASSWORD:?}
+    volumes:
+      - ${DATA_DIR:?}/redis:/data
+    ports:
+      - "127.0.0.1:${REDIS_HOST_PORT:-6380}:6379"
+    networks:
+      data:
+        aliases:
+          - redis
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - "redis-cli ping | grep -q PONG"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  data:
+    external: true
+    name: creativitycenter-data

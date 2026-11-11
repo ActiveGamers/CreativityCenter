@@ -1,0 +1,95 @@
+# Manual rollback of the production site.
+#
+# Actions tab -> "Rollback" -> "Run workflow".
+#
+#   * leave `tag` empty: the host nginx upstream flips back to the colour the
+#     last deploy replaced. That colour was left running, so this is one
+#     graceful reload - no image pull, no container rebuild, no migration.
+#   * give a `tag` (for example sha-1a2b3c4): that release is deployed onto the
+#     idle colour through the same health-gated procedure as a normal release.
+#     Use it to reach a release older than the previous one.
+#
+# Rolling back never runs `migrate:rollback`: a schema downgrade is a separate,
+# deliberate decision. Releases are expected to carry backward-compatible
+# migrations, which is what lets the old code keep working on the new schema.
+
+name: Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Image tag to restore (empty = flip back to the previous colour)'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    name: Roll back production
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment:
+      name: production
+      url: http://${{ secrets.SSH_HOST }}:5517
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+
+      - name: Set up SSH access
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<EOF
+          Host production
+              HostName ${SSH_HOST}
+              User ${SSH_USER}
+              IdentityFile ~/.ssh/id_deploy
+              IdentitiesOnly yes
+              UserKnownHostsFile ~/.ssh/known_hosts
+              StrictHostKeyChecking yes
+              ServerAliveInterval 30
+              ServerAliveCountMax 6
+          EOF
+          chmod 600 ~/.ssh/config
+
+      - name: Sync the deploy directory
+        env:
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          tar -czf - deploy | ssh production \
+            "mkdir -p '${DEPLOY_PATH}' && tar -xzf - -C '${DEPLOY_PATH}' && chmod +x '${DEPLOY_PATH}'/deploy/*.sh"
+
+      - name: Roll back
+        env:
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          ssh production "APP_ROOT='${DEPLOY_PATH}' '${DEPLOY_PATH}/deploy/rollback.sh' '${TAG}'"
+
+      - name: Summarise the rollback
+        if: always()
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          {
+            echo "### Production rollback"
+            echo ""
+            echo "- Requested tag: \`${TAG:-previous colour}\`"
+            echo "- Result: \`${{ job.status }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"

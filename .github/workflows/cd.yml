@@ -121,9 +121,10 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    environment:
-      name: production
-      url: http://${{ secrets.SSH_HOST }}:5517
+    # No `environment.url`: that field does not accept the `secrets` context,
+    # and referencing it there fails the whole workflow before any job starts.
+    # The site link is written into the job summary instead.
+    environment: production
     steps:
       - name: Check out the repository
         uses: actions/checkout@v7
@@ -176,6 +177,7 @@ jobs:
         if: always()
         env:
           TAG: ${{ needs.build.outputs.tag }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
         run: |
           {
             echo "### Production release"
@@ -184,6 +186,7 @@ jobs:
             echo "- Commit: \`${GITHUB_SHA}\`"
             echo "- Ref: \`${GITHUB_REF_NAME}\`"
             echo "- Result: \`${{ job.status }}\`"
+            echo "- Site: http://${SSH_HOST}:5517"
           } >> "$GITHUB_STEP_SUMMARY"
 
   prune:

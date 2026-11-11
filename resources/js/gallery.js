@@ -121,7 +121,7 @@ function createOverlay() {
                     aria-label="تصویر قبلی">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                      stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-5" aria-hidden="true">
-                    <path d="m15 6-6 6 6 6"/>
+                    <path d="m9 6 6 6-6 6"/>
                 </svg>
             </button>
             <button type="button" data-lightbox-next
@@ -129,7 +129,7 @@ function createOverlay() {
                     aria-label="تصویر بعدی">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                      stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="size-5" aria-hidden="true">
-                    <path d="m9 6 6 6-6 6"/>
+                    <path d="m15 6-6 6 6 6"/>
                 </svg>
             </button>
             <img data-lightbox-image src="" alt=""

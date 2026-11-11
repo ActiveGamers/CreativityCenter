@@ -3,6 +3,10 @@
 # Pint is intentionally absent: formatting stays a local step (`vendor/bin/pint
 # --dirty`, see AGENTS.md) and this run is about behaviour. The suite renders
 # Blade through Vite, so the assets are built before `php artisan test`.
+#
+# Pushes to dev and main are gated by CD, which calls this workflow and then
+# builds and deploys. They are excluded from the push trigger below so the suite
+# never runs twice for the same commit.
 
 name: QA
 
@@ -10,8 +14,9 @@ on:
   # A pull request opened from this repository also fires `push`, so the branch
   # filter keeps the suite from running twice for the same change.
   push:
-    branches: [dev, main]
+    branches-ignore: [dev, main]
   pull_request:
+  workflow_call:
 
 permissions:
   contents: read

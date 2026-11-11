@@ -525,23 +525,26 @@
         }
     }
 
-    /* Without a running app the drawer cannot be opened, so its trigger is
-       hidden. The `app-ready` class is added by the bundle once it has
-       initialised: a blocked or failed bundle keeps the trigger hidden
-       instead of showing a button that would do nothing. */
-    html:not(.app-ready) [data-drawer-open] {
+    /* Without a working drawer the menu cannot be opened, so its trigger is
+       hidden. The `nav-ready` class is added by the navigation module once the
+       drawer is wired: a bundle that is blocked, that never runs, or that
+       throws before the drawer is ready keeps the trigger hidden instead of
+       showing a button that would do nothing. */
+    html:not(.nav-ready) [data-drawer-open] {
         display: none;
     }
 
     /* The fallback navigation is always part of the markup: it takes over
-       when the JavaScript never runs. With JavaScript available the layout's
-       bootstrap class (`html.js`) hides it immediately, before the first paint,
-       and the app-ready class keeps it hidden once the drawer has taken over,
-       so the fallback and the drawer are never visible at the same time.
-       Without JavaScript the fallback remains visible as a delayed CSS-only
-       fallback. */
+       when the JavaScript never runs, and when the bundle fails to load or the
+       drawer fails to initialise. With a working drawer the layout's bootstrap
+       class (`html.js`) hides it immediately, before the first paint, and the
+       `nav-ready` class keeps it hidden once the drawer has taken over, so the
+       fallback and the drawer are never visible at the same time. Without
+       JavaScript — or when the bundle is blocked, throws, or never sets
+       `nav-ready` — the bootstrap drops `js` again and the fallback remains
+       visible as a CSS-only fallback. */
     html.js [data-fallback-nav],
-    html.app-ready [data-fallback-nav] {
+    html.nav-ready [data-fallback-nav] {
         display: none;
     }
 

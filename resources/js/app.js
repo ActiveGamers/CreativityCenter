@@ -69,17 +69,17 @@ function safely(initialiser) {
 
 function boot() {
     safely(initTheme);
+
+    /* The navigation module sets the `nav-ready` marker itself once the drawer
+       is wired, so a drawer that fails to initialise keeps the CSS-only
+       fallback navigation instead of hiding it behind a dead trigger. */
     safely(initNavigation);
+
     safely(initForms);
     safely(initReveal);
     safely(initCounters);
     safely(initGallery);
     safely(initNews);
-
-    /* The app is ready: the CSS keeps the drawer trigger hidden until this
-       marker is on the <html> element, so a bundle that never runs never
-       shows a button that would do nothing. */
-    document.documentElement.classList.add('app-ready');
 }
 
 if (document.readyState === 'loading') {

@@ -368,7 +368,18 @@ test('the error views explain the situation and link to the contact page', funct
     expect($expired)
         ->toContain('نشست شما منقضی شده است')
         ->toContain('تلاش دوباره')
-        ->toContain(route('contact.index'));
+        ->toContain('صفحهٔ اصلی');
+
+    /* An expired session is a self-service error: the page body itself offers
+       no contact link. The shared chrome — header, fallback navigation, drawer
+       and footer — is not page copy and always carries that link, so only the
+       page body is inspected. `<main>` and not the first `<section>`: the
+       shared chrome may grow a section of its own, and the assertion would
+       then silently inspect the wrong element. The match itself is asserted
+       first: an empty match would make the negative assertion pass vacuously. */
+    expect(preg_match('/<main\b.*?<\/main>/su', $expired, $expiredBody))->toBe(1);
+
+    expect($expiredBody[0])->not->toContain(route('contact.index'));
 
     /* There is no login on this public website, so the 419 view must not
        offer a "sign in again" action. */

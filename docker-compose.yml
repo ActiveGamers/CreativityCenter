@@ -169,6 +169,12 @@ services:
       # media conversion, ...) needs Redis to be reachable.
       redis:
         condition: service_healthy
+      # The optional MySQL profile: the entrypoint migrates at start up, so
+      # with the profile active the app must wait for MySQL to accept
+      # connections. `required: false` keeps this inert while the profile is off.
+      db:
+        condition: service_healthy
+        required: false
 
   nginx:
     image: nginx:alpine

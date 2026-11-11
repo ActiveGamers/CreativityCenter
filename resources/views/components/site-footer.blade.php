@@ -30,12 +30,14 @@
 
     /* The footer lists the first few fields. The list is read from the model
        when it is available and cached for an hour so it never turns the
-       footer into a per-request database hit. */
+       footer into a per-request database hit. Only titles and slugs are
+       cached: the URLs are built at render time, so a cache shared across
+       hosts never serves another host's links. */
     $majorLinks = [];
 
     try {
         if (class_exists(\App\Models\Major::class) && \Illuminate\Support\Facades\Route::has('majors.show')) {
-            $majorLinks = \Illuminate\Support\Facades\Cache::remember('footer.major_links', 3600, function () {
+            $majorLinks = \Illuminate\Support\Facades\Cache::remember('footer.major_links.v2', 3600, function () {
                 return \App\Models\Major::query()
                     ->active()
                     ->select(['id', 'title', 'slug'])
@@ -44,7 +46,7 @@
                     ->get()
                     ->map(fn ($major): array => [
                         'title' => $major->title,
-                        'href' => route('majors.show', $major->slug),
+                        'slug' => $major->slug,
                     ])
                     ->all();
             });
@@ -87,7 +89,7 @@
             <ul class="mt-4 space-y-3 text-sm">
                 @forelse ($majorLinks as $major)
                     <li>
-                        <a href="{{ $major['href'] }}" class="text-ink-200/90 transition-colors hover:text-brand-300">
+                        <a href="{{ route('majors.show', $major['slug']) }}" class="text-ink-200/90 transition-colors hover:text-brand-300">
                             {{ $major['title'] }}
                         </a>
                     </li>
@@ -173,7 +175,13 @@
 
             <p class="inline-flex items-center gap-1.5 text-ink-200/90">
                 <x-icon name="spark" class="size-4 shrink-0 text-brand-300" />
-                <span>طراح و سازندگان: سید امین پور سیدی؛ محمد طاها امیدی</span>
+                <span>
+                    طراح و سازندگان:
+                    <a href="https://github.com/ActiveGamers"
+                       target="_blank"
+                       rel="noopener noreferrer"
+                       class="font-medium text-ink-100 transition-colors hover:text-brand-300">محمدطاها امیدی</a>
+                </span>
             </p>
         </div>
     </div>

@@ -13,8 +13,10 @@ class GalleryImageSeeder extends Seeder
     /**
      * The gallery images of the website.
      *
-     * NOTE: Every entry points to a neutral SVG placeholder. The school has to
-     * send the real photographs of the classrooms, laboratories and events.
+     * NOTE: The educational entries point to neutral SVG placeholders; the
+     * school has to send the real photographs of the classrooms, laboratories
+     * and workshops. The achievements entries are the real portraits of the
+     * students whose national results are recorded in the achievements page.
      *
      * @var array<int, array<string, mixed>>
      */
@@ -44,27 +46,43 @@ class GalleryImageSeeder extends Seeder
             'is_published' => true,
         ],
         [
-            'title' => 'مراسم تجلیل از دانش‌آموزان برتر',
-            'caption' => 'تصویر نمونه از مراسم تجلیل از دانش‌آموزان برتر.',
-            'path' => '/images/gallery/placeholder-4.svg',
+            'title' => 'علی پرویز — رتبه اول کنکور کشور',
+            'caption' => 'رتبه اول کنکور کشور در رشته مکاترونیک.',
+            'path' => '/images/gallery/ali-parviz.jpg',
             'album' => 'افتخارات',
             'order' => 4,
             'is_published' => true,
         ],
         [
-            'title' => 'بازدید از پروژه‌های دانش‌آموزی',
-            'caption' => 'تصویر نمونه از بازدید از پروژه‌های دانش‌آموزی.',
-            'path' => '/images/gallery/placeholder-5.svg',
+            'title' => 'محمدرسول کریمی — پژوهشگر برتر کشوری',
+            'caption' => 'پژوهشگر برتر کشوری در سال ۱۴۰۴.',
+            'path' => '/images/gallery/mohammad-rasool-karimi.jpg',
             'album' => 'افتخارات',
             'order' => 5,
             'is_published' => true,
         ],
         [
-            'title' => 'ارزیابی پایانی سال تحصیلی',
-            'caption' => 'تصویر نمونه از ارزیابی پایانی سال تحصیلی.',
-            'path' => '/images/gallery/placeholder-6.svg',
+            'title' => 'احمدرضا آوندی — رتبه اول کنکور کشور',
+            'caption' => 'رتبه اول کنکور کشور در حوزه رسانه و فضای مجازی.',
+            'path' => '/images/gallery/ahmad-reza-avandi.jpg',
             'album' => 'افتخارات',
             'order' => 6,
+            'is_published' => true,
+        ],
+        [
+            'title' => 'حجت‌الله محبوبی — عضو تیم ملی والیبال ساحلی',
+            'caption' => 'عضو تیم ملی والیبال ساحلی در مسابقات جهانی.',
+            'path' => '/images/gallery/hojjat-allah-mahbobi.jpg',
+            'album' => 'افتخارات',
+            'order' => 7,
+            'is_published' => true,
+        ],
+        [
+            'title' => 'عرفان دهقانی — رکورددار روبیک ایران',
+            'caption' => 'رکورددار حل مکعب روبیک ایران با زمان ۵/۸۰ ثانیه.',
+            'path' => '/images/gallery/erfan-dehghani.jpg',
+            'album' => 'افتخارات',
+            'order' => 8,
             'is_published' => true,
         ],
     ];

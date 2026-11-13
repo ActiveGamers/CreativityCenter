@@ -69,9 +69,8 @@
         {{-- درباره هنرستان --}}
         <div class="lg:col-span-4">
             <a href="{{ $resolve('home') }}" class="flex items-center gap-3">
-                <span class="grid size-11 shrink-0 place-items-center rounded-xl bg-brand-500 text-ink-950">
-                    <x-icon name="graduation" class="size-6" />
-                </span>
+                <img src="{{ asset('images/logo.jpg') }}" alt="{{ $fullName }}"
+                     class="size-11 shrink-0 rounded-xl bg-white object-contain p-1" width="44" height="44">
                 <span class="flex flex-col leading-tight">
                     <span class="font-display text-base font-extrabold text-white">{{ $shortName }}</span>
                     <span class="text-xs text-ink-300">{{ $fullName }}</span>

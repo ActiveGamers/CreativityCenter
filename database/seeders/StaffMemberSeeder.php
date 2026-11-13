@@ -20,7 +20,7 @@ class StaffMemberSeeder extends Seeder
             'name' => 'جناب دکتر نوری زاده',
             'role' => 'مدیریت',
             'subject' => null,
-            'photo' => null,
+            'photo' => '/images/staff/noori-zadeh.jpg',
             'phone' => '09177653185',
             'bio' => 'مدیر هنرستان جوار شرکت پالایش نفت بندرعباس و هدایت‌کننده مجموعه آموزشی و پرورشی این مجموعه.',
             'order' => 1,

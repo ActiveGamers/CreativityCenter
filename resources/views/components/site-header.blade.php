@@ -75,9 +75,8 @@
         <div class="container-page flex h-16 items-center justify-between gap-4 lg:h-20">
             {{-- Wordmark --}}
             <a href="{{ $homeUrl }}" class="group flex shrink-0 items-center gap-3">
-                <span class="grid size-11 shrink-0 place-items-center rounded-xl bg-ink-900 text-white transition-colors group-hover:bg-brand-500 dark:bg-brand-500 dark:text-ink-950">
-                    <x-icon name="graduation" class="size-6" />
-                </span>
+                <img src="{{ asset('images/logo.jpg') }}" alt="{{ $fullName }}"
+                     class="size-11 shrink-0 rounded-xl bg-white object-contain p-1 ring-1 ring-ink-900/10 dark:ring-white/15" width="44" height="44">
                 <span class="flex flex-col leading-tight">
                     <span class="font-display text-[0.95rem] font-extrabold text-ink-900 dark:text-white">
                         {{ $shortName }}

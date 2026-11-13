@@ -6,6 +6,7 @@ use App\Models\GalleryImage;
 use App\Models\Major;
 use App\Models\MajorCourse;
 use App\Models\Post;
+use Database\Seeders\GalleryImageSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 /*
@@ -124,6 +125,20 @@ test('the gallery page renders the album filters and the lightbox triggers', fun
     $response->assertSee('data-filter-item', false);
     $response->assertSee('کلاس درس شبکه');
     $response->assertSee('جای‌نگهدار', false);
+});
+
+test('the gallery shows the seeded achievement portraits under the achievements album', function () {
+    $this->seed(GalleryImageSeeder::class);
+
+    $response = $this->get(route('gallery'));
+
+    $response->assertOk();
+    $response->assertSee('data-filter="افتخارات"', false);
+    $response->assertSee('/images/gallery/ali-parviz.jpg', false);
+    $response->assertSee('/images/gallery/mohammad-rasool-karimi.jpg', false);
+    $response->assertSee('/images/gallery/ahmad-reza-avandi.jpg', false);
+    $response->assertSee('/images/gallery/hojjat-allah-mahbobi.jpg', false);
+    $response->assertSee('/images/gallery/erfan-dehghani.jpg', false);
 });
 
 test('the news page renders the list, the category filter and the pagination fallback', function () {

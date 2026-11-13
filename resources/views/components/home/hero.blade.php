@@ -51,7 +51,10 @@
 
         {{-- The photo slot and the quick facts that caption it. --}}
         <div class="lg:col-span-5" data-reveal style="--reveal-delay: 140ms">
-            <x-home.hero-visual />
+            <x-home.hero-visual
+                src="images/banners/dastavard-ha.jpg"
+                alt="دستاوردها و افتخارات هنرستان جوار شرکت پالایش نفت بندرعباس"
+                ratio="aspect-[3/1]" />
 
             <dl class="mt-5 grid grid-cols-1 gap-4 border-t border-white/10 pt-5">
                 @if (filled($address))

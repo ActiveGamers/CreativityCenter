@@ -30,7 +30,13 @@
             ['label' => 'بازه زمانی', 'value' => '۱۴۰۱ تا ۱۴۰۳'],
             ['label' => 'سطح رقابت', 'value' => 'کشوری'],
         ]"
-    />
+    >
+        <div class="overflow-hidden rounded-2xl border border-white/10">
+            <img src="{{ asset('images/banners/best-3-konkoor.jpg') }}"
+                 alt="سه رتبه برتر کنکور کشور: علی پرویز، محمد متین دستان‌زند و پارسا اسدی"
+                 class="aspect-[963/694] w-full object-cover" loading="eager" decoding="async">
+        </div>
+    </x-page-hero>
 
     {{-- ۲ · آمار ----------------------------------------------------------- --}}
     <x-home.stat-strip

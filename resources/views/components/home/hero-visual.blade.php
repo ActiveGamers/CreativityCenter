@@ -3,6 +3,7 @@
     'hint' => null,
     'label' => 'محل قرارگیری تصویر',
     'alt' => 'نمای فنی رشته‌های هنرستان',
+    'ratio' => 'aspect-[16/9]',
 ])
 
 @php
@@ -25,10 +26,10 @@
 <div {{ $attributes->merge(['class' => 'relative w-full overflow-hidden rounded-2xl border border-ink-900/10 bg-[var(--surface-muted)] dark:border-white/10']) }}>
     @if ($imageExists)
         <img src="{{ $imageUrl }}" alt="{{ $alt }}"
-             class="aspect-[16/9] w-full object-cover" loading="eager" decoding="async">
+             class="{{ $ratio }} w-full object-cover" loading="eager" decoding="async">
     @else
         {{-- Placeholder: a dashed hairline frame that reads as a photo slot. --}}
-        <div class="flex aspect-[16/9] w-full flex-col items-center justify-center gap-3 border-2 border-dashed border-ink-900/15 p-4 text-center dark:border-white/20">
+        <div class="flex {{ $ratio }} w-full flex-col items-center justify-center gap-3 border-2 border-dashed border-ink-900/15 p-4 text-center dark:border-white/20">
             <span class="grid size-12 shrink-0 place-items-center rounded-xl bg-ink-100 text-ink-500 dark:bg-white/5 dark:text-brand-300">
                 <x-icon name="building" class="size-6" />
             </span>

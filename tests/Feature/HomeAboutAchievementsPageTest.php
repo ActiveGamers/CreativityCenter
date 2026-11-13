@@ -212,13 +212,29 @@ test('the about page does not repeat the grade levels', function () {
     $response->assertDontSee('پایه‌های تحصیلی');
 });
 
-test('the home page reserves a landscape photo slot for the school photograph', function () {
+test('the home hero shows the achievements banner in the photo slot', function () {
     $response = $this->get(route('home'));
 
     $response->assertOk();
-    $response->assertSee('محل قرارگیری تصویر');
-    $response->assertSee('public/images/school/technical-view.jpg');
-    $response->assertSee('aspect-[16/9]', false);
+    $response->assertSee('images/banners/dastavard-ha.jpg', false);
+    $response->assertDontSee('محل قرارگیری تصویر');
+});
+
+test('the achievements page hero shows the top three konkoor banner', function () {
+    $response = $this->get(route('achievements'));
+
+    $response->assertOk();
+    $response->assertSee('images/banners/best-3-konkoor.jpg', false);
+});
+
+test('the management card renders the manager portrait when one is seeded', function () {
+    $response = $this->get(route('home'));
+
+    $response->assertOk();
+    $response->assertSee('/images/staff/noori-zadeh.jpg', false);
+
+    expect(StaffMember::query()->where('role', 'مدیریت')->value('photo'))
+        ->toBe('/images/staff/noori-zadeh.jpg');
 });
 
 test('the footer credits the designers exactly once', function () {

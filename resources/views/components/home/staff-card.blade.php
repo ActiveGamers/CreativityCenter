@@ -9,6 +9,13 @@
     $subject = data_get($member, 'subject', '');
     $bio = data_get($member, 'bio', '');
     $phone = data_get($member, 'phone', '');
+    $photo = data_get($member, 'photo', '');
+
+    $photoUrl = filled($photo)
+        ? (str_starts_with((string) $photo, 'http') || str_starts_with((string) $photo, '/')
+            ? $photo
+            : asset('storage/' . ltrim((string) $photo, '/')))
+        : null;
 
     /* The manager gets the amber plaque, the deputy the petrol one. */
     $isManager = str_contains((string) $role, 'مدیر');
@@ -24,9 +31,14 @@
 
 <article {{ $attributes->merge(['class' => 'surface-card flex flex-col gap-5 p-6 transition-shadow duration-300 hover:shadow-[var(--shadow-card-hover)]']) }}>
     <div class="flex items-center gap-4">
-        <span class="grid size-14 shrink-0 place-items-center rounded-2xl {{ $chip }}">
-            <x-icon name="user" class="size-7" />
-        </span>
+        @if (filled($photoUrl))
+            <img src="{{ $photoUrl }}" alt="{{ $name }}" loading="lazy" decoding="async"
+                 class="size-14 shrink-0 rounded-2xl object-cover">
+        @else
+            <span class="grid size-14 shrink-0 place-items-center rounded-2xl {{ $chip }}">
+                <x-icon name="user" class="size-7" />
+            </span>
+        @endif
 
         <div class="min-w-0">
             <h3 class="font-display text-lg font-bold leading-8 text-ink-900 text-balance-fa dark:text-white">

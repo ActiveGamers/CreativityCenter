@@ -1,0 +1,56 @@
+# Dependencies - installed inside the image (composer install / npm ci)
+node_modules
+vendor
+node_modules/.cache
+
+# Version control
+# The .gitignore itself stays in the build context: Tailwind v4 uses it to
+# detect the sources of the CSS build. Without it the image build would scan
+# the vendor folder and produce a different stylesheet than the local build.
+.git
+.github
+
+# Local environment / secrets
+# Every .env.* variant (.env.production, .env.local, .env.backup, ...) may
+# carry secrets and must never end up in the image. The tracked templates are
+# re-included explicitly - the entrypoint bootstraps a missing .env from
+# .env.example.
+.env
+.env.*
+!.env.example
+!.env.testing
+
+# Laravel runtime artifacts
+# A locally generated config.php / routes-*.php would be baked into the image
+# and used at runtime (the directory itself stays in the image).
+bootstrap/cache/*.php
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/framework/testing/*
+storage/logs/*
+storage/framework/dompdf-fonts/*
+
+# Frontend build output (rebuilt inside the container)
+public/build
+public/hot
+
+# The storage symlink points outside of the build context - it is created by
+# `php artisan storage:link` inside the container at start up.
+public/storage
+
+# Database files
+database/*.sqlite
+database/*.sqlite-journal
+
+# Tests are not needed to build the image
+tests
+
+# Editors / IDE
+.idea
+.vscode
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.log

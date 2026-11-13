@@ -1,0 +1,240 @@
+# Continuous delivery: QA -> image build -> zero-downtime production deploy.
+#
+# Fires on every push to dev and main, which includes the merge commit of a pull
+# request. QA runs first (the same workflow every branch and PR uses), and only
+# a green suite produces images and touches the server.
+#
+# The deploy itself is deploy/deploy.sh on the server: it brings the idle
+# blue/green colour up on the new image, health-gates it, migrates, and only
+# then moves the host nginx upstream with a graceful reload. The colour that
+# served traffic stays warm, so a failure after the flip is one more reload
+# back. Rollback is the "Rollback" workflow.
+#
+# Images are tagged sha-<commit> (immutable, what the server runs) and the branch
+# name (moving, for humans). The newest KEEP_RELEASES sha tags are retained.
+
+name: CD
+
+on:
+  push:
+    branches: [dev, main]
+
+permissions:
+  contents: read
+  packages: write
+
+# A release must never be cancelled halfway: the second push waits for the
+# first to finish instead of killing it between the flip and the smoke test.
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  KEEP_RELEASES: 10
+
+jobs:
+  qa:
+    name: QA
+    uses: ./.github/workflows/qa.yml
+
+  build:
+    name: Build the release images
+    needs: qa
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+      app: ${{ steps.images.outputs.app }}
+      web: ${{ steps.images.outputs.web }}
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+
+      - name: Point the lock file at GitHub for this run
+        run: |
+          # The committed lock keeps the mirror the maintainers use locally; the
+          # runner cannot reach it, so only this working copy is rewritten. The
+          # build context picks the rewritten file up.
+          if grep -q 'https://mirror-composer.runflare.com/repos/' composer.lock; then
+            sed -i 's|https://mirror-composer.runflare.com/repos/|https://api.github.com/repos/|g' composer.lock
+          fi
+
+      - name: Resolve the release tag
+        id: tag
+        run: echo "tag=sha-${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve the image names
+        id: images
+        run: |
+          echo "app=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+          echo "web=ghcr.io/${GITHUB_REPOSITORY,,}-web" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to the GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push the application image
+        uses: docker/build-push-action@v7
+        env:
+          # The lock rewrite above sends composer to api.github.com, which allows
+          # only 60 anonymous downloads an hour. `secret-envs` forwards the token
+          # to the build as a secret, so it never lands in an image layer.
+          COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ github.token }}"}}'
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: |
+            ${{ steps.images.outputs.app }}:${{ steps.tag.outputs.tag }}
+            ${{ steps.images.outputs.app }}:${{ github.ref_name }}
+          secret-envs: composer_auth=COMPOSER_AUTH
+          cache-from: type=gha,scope=cd-app
+          cache-to: type=gha,mode=max,scope=cd-app
+          # No attestations for the delivery images: they would create untagged
+          # manifests that the retention step below cannot attribute to a
+          # release. The published versions keep them (Docker Release).
+          provenance: false
+          sbom: false
+
+      - name: Build and push the edge image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: Dockerfile.nginx
+          push: true
+          build-args: |
+            APP_IMAGE=${{ steps.images.outputs.app }}:${{ steps.tag.outputs.tag }}
+          tags: |
+            ${{ steps.images.outputs.web }}:${{ steps.tag.outputs.tag }}
+            ${{ steps.images.outputs.web }}:${{ github.ref_name }}
+          provenance: false
+          sbom: false
+
+  deploy:
+    name: Deploy to production
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    # No `environment.url`: that field does not accept the `secrets` context,
+    # and referencing it there fails the whole workflow before any job starts.
+    # The site link is written into the job summary instead.
+    environment: production
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+
+      - name: Set up SSH access
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          # The host keys are pinned as a secret: no trust-on-first-use, so a
+          # machine-in-the-middle cannot impersonate the production server.
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/id_deploy
+          chmod 600 ~/.ssh/id_deploy
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<EOF
+          Host production
+              HostName ${SSH_HOST}
+              User ${SSH_USER}
+              IdentityFile ~/.ssh/id_deploy
+              IdentitiesOnly yes
+              UserKnownHostsFile ~/.ssh/known_hosts
+              StrictHostKeyChecking yes
+              ServerAliveInterval 30
+              ServerAliveCountMax 6
+          EOF
+          chmod 600 ~/.ssh/config
+
+      - name: Sync the deploy directory
+        env:
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          # The server runs the deploy logic from the repository, so a change to
+          # the release procedure is reviewed like any other code change.
+          tar -czf - deploy | ssh production \
+            "mkdir -p '${DEPLOY_PATH}' && tar -xzf - -C '${DEPLOY_PATH}' && chmod +x '${DEPLOY_PATH}'/deploy/*.sh"
+
+      - name: Deploy the release
+        env:
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          TAG: ${{ needs.build.outputs.tag }}
+        run: |
+          ssh production "APP_ROOT='${DEPLOY_PATH}' '${DEPLOY_PATH}/deploy/deploy.sh' '${TAG}'"
+
+      - name: Summarise the release
+        if: always()
+        env:
+          TAG: ${{ needs.build.outputs.tag }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+        run: |
+          {
+            echo "### Production release"
+            echo ""
+            echo "- Image tag: \`${TAG}\`"
+            echo "- Commit: \`${GITHUB_SHA}\`"
+            echo "- Ref: \`${GITHUB_REF_NAME}\`"
+            echo "- Result: \`${{ job.status }}\`"
+            echo "- Site: http://${SSH_HOST}:5517"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  prune:
+    name: Prune the old release images
+    needs: [build, deploy]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Cleanup must never fail a release that is already live.
+    continue-on-error: true
+    steps:
+      - name: Delete the sha tags beyond the retention window
+        env:
+          # `github.token` can only delete a package version when the repository
+          # holds the Admin role under the package's "Manage Actions Access".
+          # Otherwise store a PAT with `delete:packages` as PACKAGES_TOKEN.
+          GH_TOKEN: ${{ secrets.PACKAGES_TOKEN || github.token }}
+          OWNER_TYPE: ${{ github.event.repository.owner.type }}
+          REPOSITORY: ${{ github.event.repository.name }}
+          KEEP: ${{ env.KEEP_RELEASES }}
+        run: |
+          for suffix in '' '-web'; do
+            package="${REPOSITORY,,}${suffix}"
+
+            if [ "$OWNER_TYPE" = "Organization" ]; then
+              api="orgs/${GITHUB_REPOSITORY_OWNER}/packages/container/${package}/versions"
+            else
+              api="users/${GITHUB_REPOSITORY_OWNER}/packages/container/${package}/versions"
+            fi
+
+            if ! versions="$(gh api --paginate "$api" --jq '.[]' 2>/dev/null)"; then
+              echo "::warning::could not list ${package} - skipping its retention"
+              continue
+            fi
+
+            ids="$(printf '%s' "$versions" | jq -rs --argjson keep "$KEEP" '
+              map(select([.metadata.container.tags[]? | select(startswith("sha-"))] | length > 0))
+              | sort_by(.created_at) | reverse | .[$keep:] | map(.id) | join(",")')"
+
+            if [ -z "$ids" ]; then
+              echo "${package}: nothing to delete"
+              continue
+            fi
+
+            for id in ${ids//,/ }; do
+              if gh api --method DELETE "$api/$id" > /dev/null; then
+                echo "${package}: deleted version $id"
+              else
+                echo "::warning::${package}: could not delete version $id"
+              fi
+            done
+          done

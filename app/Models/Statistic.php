@@ -1,0 +1,33 @@
+<?php
+
+namespace App\Models;
+
+use Database\Factories\StatisticFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+#[Fillable([
+    'label',
+    'value',
+    'description',
+    'icon',
+    'order',
+])]
+class Statistic extends Model
+{
+    /** @use HasFactory<StatisticFactory> */
+    use HasFactory;
+
+    /**
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'order' => 'integer',
+        ];
+    }
+}

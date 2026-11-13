@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600" role="img" aria-label="تصویر نمونه">
+  <rect width="800" height="600" fill="#0E3A3F" />
+  <g fill="#16555C">
+    <rect x="80" y="70" width="160" height="160" />
+    <rect x="320" y="70" width="160" height="160" />
+    <rect x="560" y="70" width="160" height="160" />
+    <rect x="80" y="370" width="160" height="160" />
+    <rect x="320" y="370" width="160" height="160" />
+    <rect x="560" y="370" width="160" height="160" />
+  </g>
+  <path d="M0 300 L800 180 L800 240 L0 360 Z" fill="#D89B3C" />
+  <rect x="80" y="285" width="120" height="18" fill="#F4F1EA" />
+</svg>
